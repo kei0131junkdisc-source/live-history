@@ -368,7 +368,7 @@
       <div class="form-group">
         <label>写真</label>
         <div class="img-upload-area" id="upload-area">
-          <input type="file" accept="image/*" id="img-input" onchange="handleImageSelect(event)">
+          <input type="file" accept="image/*"  id="img-input" onchange="handleImageSelect(event)">
           <div class="upload-icon">📷</div>
           <div class="upload-text">タップして撮影・選択</div>
           <div class="upload-sub">撮影するとOCRで自動入力を試みます</div>
@@ -807,7 +807,7 @@ function openAddSheet(editId=null) {
       if (e.imageData) {
         const area = document.getElementById('upload-area');
         area.classList.add('has-image');
-        area.innerHTML = `<img src="${e.imageData}"><input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)">`;
+        area.innerHTML = `<img src="${e.imageData}"><input type="file" accept="image/*"  id="img-input" onchange="handleImageSelect(event)">`;
       }
     }
     document.getElementById('sheet-title').textContent = 'ライブを編集';
@@ -829,7 +829,7 @@ function clearForm() {
   ['f-event','f-date','f-venue','f-memo'].forEach(id => document.getElementById(id).value='');
   const area = document.getElementById('upload-area');
   area.classList.remove('has-image');
-  area.innerHTML = `<input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)"><div class="upload-icon">📷</div><div class="upload-text">タップして撮影・選択</div><div class="upload-sub">撮影するとOCRで自動入力を試みます</div>`;
+  area.innerHTML = `<input type="file" accept="image/*"  id="img-input" onchange="handleImageSelect(event)"><div class="upload-icon">📷</div><div class="upload-text">タップして撮影・選択</div><div class="upload-sub">撮影するとOCRで自動入力を試みます</div>`;
   document.getElementById('ocr-result-preview').style.display = 'none';
 }
 
@@ -842,7 +842,7 @@ async function handleImageSelect(event) {
     currentImageData = e.target.result;
     const area = document.getElementById('upload-area');
     area.classList.add('has-image');
-    area.innerHTML = `<img src="${currentImageData}" style="max-height:220px"><input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)">`;
+    area.innerHTML = `<img src="${currentImageData}" style="max-height:220px"><input type="file" accept="image/*"  id="img-input" onchange="handleImageSelect(event)">`;
     await runOCR(currentImageData);
   };
   reader.readAsDataURL(file);
