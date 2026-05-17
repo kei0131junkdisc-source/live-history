@@ -368,7 +368,7 @@
       <div class="form-group">
         <label>写真</label>
         <div class="img-upload-area" id="upload-area">
-          <input type="file" accept="image/*"  id="img-input" onchange="handleImageSelect(event)">
+          <input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)">
           <div class="upload-icon">📷</div>
           <div class="upload-text">タップして撮影・選択</div>
           <div class="upload-sub">撮影するとOCRで自動入力を試みます</div>
@@ -402,7 +402,7 @@
       </div>
       <div style="display:flex; gap:10px; margin-top:6px;">
         <button class="btn btn-secondary btn-sm" id="delete-btn" style="display:none; flex:1;" onclick="deleteCurrentEntry()">🗑 削除</button>
-        <button class="btn btn-primary" style="flex:2;" onclick="saveEntry()">保存する</button>
+        <button class="btn btn-primary" id="save-btn" style="flex:2;" onclick="saveEntry()">保存する</button>
       </div>
     </div>
   </div>
@@ -807,7 +807,7 @@ function openAddSheet(editId=null) {
       if (e.imageData) {
         const area = document.getElementById('upload-area');
         area.classList.add('has-image');
-        area.innerHTML = `<img src="${e.imageData}"><input type="file" accept="image/*"  id="img-input" onchange="handleImageSelect(event)">`;
+        area.innerHTML = `<img src="${e.imageData}"><input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)">`;
       }
     }
     document.getElementById('sheet-title').textContent = 'ライブを編集';
@@ -819,17 +819,35 @@ function openAddSheet(editId=null) {
   }
   renderTagsUI();
   renderTagSuggestions();
+
+  // 保存ボタンの初期状態をリセット
+  const saveBtn = document.getElementById('save-btn');
+  if (saveBtn) {
+    saveBtn.disabled = false;
+    saveBtn.textContent = editId ? '更新する' : '保存する';
+  }
+  // フォームエラー表示をリセット
+  const errEl = document.getElementById('form-error-msg');
+  if (errEl) errEl.style.display = 'none';
+
+  // 保存フラグをリセット（前回の操作が途中で終わっていた場合の保険）
+  isSaving = false;
+
   document.getElementById('add-sheet').style.display = 'flex';
 }
 
-function closeAddSheet() { document.getElementById('add-sheet').style.display = 'none'; }
+function closeAddSheet() {
+  document.getElementById('add-sheet').style.display = 'none';
+  // フラグは finally で戻すが、ユーザーが手動で閉じた場合の保険
+  isSaving = false;
+}
 function closeSheetOutside(e) { if (e.target.id==='add-sheet') closeAddSheet(); }
 
 function clearForm() {
   ['f-event','f-date','f-venue','f-memo'].forEach(id => document.getElementById(id).value='');
   const area = document.getElementById('upload-area');
   area.classList.remove('has-image');
-  area.innerHTML = `<input type="file" accept="image/*"  id="img-input" onchange="handleImageSelect(event)"><div class="upload-icon">📷</div><div class="upload-text">タップして撮影・選択</div><div class="upload-sub">撮影するとOCRで自動入力を試みます</div>`;
+  area.innerHTML = `<input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)"><div class="upload-icon">📷</div><div class="upload-text">タップして撮影・選択</div><div class="upload-sub">撮影するとOCRで自動入力を試みます</div>`;
   document.getElementById('ocr-result-preview').style.display = 'none';
 }
 
@@ -842,7 +860,7 @@ async function handleImageSelect(event) {
     currentImageData = e.target.result;
     const area = document.getElementById('upload-area');
     area.classList.add('has-image');
-    area.innerHTML = `<img src="${currentImageData}" style="max-height:220px"><input type="file" accept="image/*"  id="img-input" onchange="handleImageSelect(event)">`;
+    area.innerHTML = `<img src="${currentImageData}" style="max-height:220px"><input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)">`;
     await runOCR(currentImageData);
   };
   reader.readAsDataURL(file);
@@ -988,48 +1006,132 @@ function addTagSug(t) {
 }
 
 // ===== SAVE =====
+// 二重送信防止フラグ
+let isSaving = false;
+
 async function saveEntry() {
-  const event = document.getElementById('f-event').value.trim();
-  const date = document.getElementById('f-date').value;
-  const venue = document.getElementById('f-venue').value.trim();
-  const memo = document.getElementById('f-memo').value.trim();
+  // ── 二重タップ防止 ──────────────────────────
+  if (isSaving) return;
+  isSaving = true;
 
-  // タグ入力中のものも追加
-  const tagInput = document.getElementById('tags-input').value.trim();
-  if (tagInput && !currentTags.includes(tagInput)) currentTags.push(tagInput);
+  const saveBtn = document.getElementById('save-btn');
+  const deleteBtn = document.getElementById('delete-btn');
 
-  const entry = {
-    id: currentEditId || 'live_' + Date.now(),
-    event, date, venue, memo,
-    tags: [...currentTags],
-    imageData: currentImageData,
-    ocrText: window._ocrFullText || (currentEditId ? (entries.find(e=>e.id===currentEditId)||{}).ocrText : ''),
-    createdAt: currentEditId ? (entries.find(e=>e.id===currentEditId)||{}).createdAt || new Date().toISOString() : new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
+  // ── ボタンをローディング状態に ──────────────
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center;">'
+      + '<span style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>'
+      + '保存中...</span>';
+  }
+  if (deleteBtn) deleteBtn.disabled = true;
 
-  await dbPut(entry);
-  entries = await dbAll();
-  renderList();
-  renderTimeline();
-  renderStats();
-  renderFilterChips();
-  closeAddSheet();
-  window._ocrFullText = '';
-  showToast(currentEditId ? '✓ 更新しました' : '✓ 保存しました');
+  try {
+    const eventName = document.getElementById('f-event').value.trim();
+    const date      = document.getElementById('f-date').value;
+    const venue     = document.getElementById('f-venue').value.trim();
+    const memo      = document.getElementById('f-memo').value.trim();
+
+    // タグ入力欄に残っている文字もタグとして追加
+    const tagInput = document.getElementById('tags-input').value.trim();
+    if (tagInput && !currentTags.includes(tagInput)) currentTags.push(tagInput);
+
+    // ── バリデーション（任意: イベント名か日付は必須） ──
+    if (!eventName && !date) {
+      showFormError('イベント名または日付を入力してください');
+      return; // finallyでフラグ・ボタンを戻す
+    }
+
+    // ── エントリ生成 ────────────────────────────
+    const isEdit = !!currentEditId;
+    const existingEntry = isEdit ? entries.find(e => e.id === currentEditId) : null;
+    const entry = {
+      id: isEdit ? currentEditId : ('live_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+      event: eventName,
+      date,
+      venue,
+      memo,
+      tags: [...currentTags],
+      imageData: currentImageData,
+      ocrText: window._ocrFullText || (existingEntry ? existingEntry.ocrText || '' : ''),
+      createdAt: existingEntry ? (existingEntry.createdAt || new Date().toISOString()) : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    // ── IndexedDB 保存 ──────────────────────────
+    await dbPut(entry);
+
+    // ── State を必ずDBから再取得して上書き ─────
+    entries = await dbAll();
+
+    // ── OCRキャッシュをリセット ─────────────────
+    window._ocrFullText = '';
+
+    // ── UI を一括更新 ────────────────────────────
+    renderList();
+    renderTimeline();
+    renderStats();
+    renderFilterChips();
+
+    // ── モーダルを閉じてリスト画面へ ───────────
+    closeAddSheet();
+    if (currentTab !== 'list') switchTab('list');
+
+    // ── 成功トースト ─────────────────────────────
+    showToast(isEdit ? '✅ ライブを更新しました' : '✅ ライブを保存しました');
+
+  } catch (err) {
+    console.error('[saveEntry] error:', err);
+    showFormError('保存に失敗しました。もう一度お試しください。');
+  } finally {
+    // ── 必ずフラグ・ボタンを元に戻す ─────────────
+    isSaving = false;
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.textContent = currentEditId ? '更新する' : '保存する';
+    }
+    if (deleteBtn) deleteBtn.disabled = false;
+  }
+}
+
+// フォーム内エラー表示
+function showFormError(msg) {
+  let el = document.getElementById('form-error-msg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'form-error-msg';
+    el.style.cssText = 'background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.4);border-radius:8px;padding:10px 14px;font-size:13px;color:#f87171;margin-top:10px;';
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn && saveBtn.parentNode) saveBtn.parentNode.insertAdjacentElement('afterend', el);
+  }
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+  // 3秒で消す
+  setTimeout(() => { if (el) el.style.display = 'none'; }, 3000);
 }
 
 async function deleteCurrentEntry() {
   if (!currentEditId) return;
   if (!confirm('このライブ記録を削除しますか？')) return;
-  await dbDelete(currentEditId);
-  entries = await dbAll();
-  renderList();
-  renderTimeline();
-  renderStats();
-  renderFilterChips();
-  closeAddSheet();
-  showToast('🗑 削除しました');
+
+  const deleteBtn = document.getElementById('delete-btn');
+  if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = '削除中...'; }
+
+  try {
+    await dbDelete(currentEditId);
+    entries = await dbAll();
+    renderList();
+    renderTimeline();
+    renderStats();
+    renderFilterChips();
+    closeAddSheet();
+    if (currentTab !== 'list') switchTab('list');
+    showToast('🗑 削除しました');
+  } catch (err) {
+    console.error('[deleteEntry] error:', err);
+    showToast('削除に失敗しました');
+    if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = '🗑 削除'; }
+  }
 }
 
 // ===== BACKUP SYSTEM =====
