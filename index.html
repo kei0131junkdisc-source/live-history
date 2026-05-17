@@ -75,6 +75,12 @@
   .live-meta span { display: inline-block; margin-right: 8px; }
   .tags-row { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
   .tag { background: rgba(192,132,252,0.15); color: var(--accent); font-size: 10px; padding: 2px 7px; border-radius: 20px; border: 1px solid var(--border); }
+  .tag-clickable { cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+  .tag-clickable:active { background: rgba(192,132,252,0.35); }
+  .tag-active { background: var(--accent2) !important; color: #fff !important; border-color: var(--accent2) !important; }
+  .filter-banner { display:none; align-items:center; justify-content:space-between; padding:8px 14px; background:rgba(192,132,252,0.1); border-bottom:1px solid var(--border2); font-size:13px; color:var(--accent); }
+  .filter-banner.visible { display:flex; }
+  .filter-banner-clear { background:none; border:1px solid var(--border2); color:var(--accent); border-radius:20px; font-size:12px; padding:3px 10px; cursor:pointer; font-family:inherit; }
 
   /* FORM */
   .form-container { padding: 14px; }
@@ -213,6 +219,10 @@
           <span class="search-icon">🔍</span>
           <input type="text" id="search-input" placeholder="イベント名・会場名・アーティスト">
         </div>
+      </div>
+      <div class="filter-banner" id="filter-banner">
+        <span id="filter-banner-text">絞り込み中</span>
+        <button class="filter-banner-clear" onclick="setFilter('all')">✕ 解除</button>
       </div>
       <div class="filter-chips" id="filter-chips">
         <div class="chip active" data-filter="all">すべて</div>
@@ -392,9 +402,10 @@
       <div class="form-group">
         <label>アーティスト</label>
         <div class="tags-input-wrap" id="tags-wrap">
-          <input type="text" id="tags-input" placeholder="入力してEnter / スペースで追加" onkeydown="handleTagInput(event)">
+          <input type="text" id="tags-input" placeholder="名前を入力 → Enter or カンマ区切りで複数入力" onkeydown="handleTagInput(event)" onpaste="handleTagPaste(event)">
         </div>
-        <div id="tag-suggestions" style="display:none; margin-top:6px; display:flex; flex-wrap:wrap; gap:5px;"></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;">例: YOASOBI, Ado, 米津玄師 ／ Enter・カンマ・読点で確定</div>
+        <div id="tag-suggestions" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;"></div>
       </div>
       <div class="form-group">
         <label>メモ</label>
@@ -645,17 +656,23 @@ function switchTab(tab) {
 
 // ===== RENDER LIST =====
 function renderList() {
-  const q = searchQuery.toLowerCase();
+  const q = searchQuery.toLowerCase().trim();
   let filtered = entries.filter(e => {
     if (q) {
       const hay = [e.event, e.venue, ...(e.tags||[])].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
     if (activeFilter !== 'all') {
-      if (!(e.tags||[]).includes(activeFilter)) return false;
+      // 完全一致・大文字小文字無視・trim後比較
+      const filterNorm = activeFilter.trim().toLowerCase();
+      const match = (e.tags||[]).some(t => t.trim().toLowerCase() === filterNorm);
+      if (!match) return false;
     }
     return true;
-  }).sort((a,b) => b.date > a.date ? 1 : -1);
+  }).sort((a,b) => (b.date||'') > (a.date||'') ? 1 : -1);
+
+  // フィルターバナーの表示更新
+  updateFilterBanner();
 
   const container = document.getElementById('list-container');
   const empty = document.getElementById('empty-state');
@@ -664,6 +681,14 @@ function renderList() {
     container.innerHTML = '';
     container.appendChild(empty);
     empty.style.display = '';
+    if (activeFilter !== 'all') {
+      empty.querySelector('.empty-title').textContent = '該当する記録がありません';
+      empty.querySelector('.empty-sub').textContent = `「${activeFilter}」のライブ記録が見つかりません`;
+    } else {
+      empty.querySelector('.empty-title').textContent = '記録がまだありません';
+      empty.querySelector('.empty-sub').textContent = '右下の＋ボタンから
+ライブ参戦を記録しましょう';
+    }
     return;
   }
   empty.style.display = 'none';
@@ -678,20 +703,39 @@ function renderList() {
           <span>📅 ${fmtDate(e.date)}</span>
           ${e.venue ? `<span>📍 ${esc(e.venue)}</span>` : ''}
         </div>
-        <div class="tags-row">${(e.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+        <div class="tags-row">${(e.tags||[]).map(t => {
+          const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase();
+          return `<span class="tag tag-clickable${isActive?' tag-active':''}" onclick="event.stopPropagation();setFilter('${esc(t)}')">${esc(t)}</span>`;
+        }).join('')}</div>
       </div>
     </div>
   `).join('');
+}
+
+// フィルターバナー表示制御
+function updateFilterBanner() {
+  const banner = document.getElementById('filter-banner');
+  const text   = document.getElementById('filter-banner-text');
+  if (!banner) return;
+  if (activeFilter === 'all') {
+    banner.classList.remove('visible');
+  } else {
+    banner.classList.add('visible');
+    if (text) text.textContent = `🎵 「${activeFilter}」で絞り込み中`;
+  }
 }
 
 // ===== FILTER CHIPS =====
 function renderFilterChips() {
   const allTags = [...new Set(entries.flatMap(e=>e.tags||[]))].sort();
   const chips = document.getElementById('filter-chips');
-  chips.innerHTML = `<div class="chip${activeFilter==='all'?' active':''}" data-filter="all" onclick="setFilter('all')">すべて</div>`;
+  const filterNorm = activeFilter.trim().toLowerCase();
+
+  chips.innerHTML = `<div class="chip${activeFilter==='all'?' active':''}" onclick="setFilter('all')">すべて</div>`;
   allTags.forEach(t => {
+    const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === filterNorm;
     const d = document.createElement('div');
-    d.className = 'chip' + (activeFilter===t?' active':'');
+    d.className = 'chip' + (isActive ? ' active' : '');
     d.textContent = t;
     d.onclick = () => setFilter(t);
     chips.appendChild(d);
@@ -776,7 +820,7 @@ function openDetail(id) {
       <div class="detail-event">${esc(e.event||'（タイトルなし）')}</div>
       ${e.date?`<div class="detail-field"><span class="detail-field-icon">📅</span><span class="detail-field-val">${fmtDate(e.date)}</span></div>`:''}
       ${e.venue?`<div class="detail-field"><span class="detail-field-icon">📍</span><span class="detail-field-val">${esc(e.venue)}</span></div>`:''}
-      ${(e.tags&&e.tags.length)?`<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">${e.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div></div>`:''}
+      ${(e.tags&&e.tags.length)?`<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">${e.tags.map(t=>`<span class="tag tag-clickable" onclick="closeDetailSheet();setFilter('${esc(t)}');switchTab('list')">${esc(t)}</span>`).join('')}</div></div></div>`:''}
       ${e.memo?`<div class="section-label">メモ</div><div style="font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${esc(e.memo)}</div>`:''}
       ${e.ocrText?`<div class="section-label">OCR全文</div><div class="ocr-result-box">${esc(e.ocrText)}</div>`:''}
     </div>
@@ -820,26 +864,19 @@ function openAddSheet(editId=null) {
   renderTagsUI();
   renderTagSuggestions();
 
-  // 保存ボタンの初期状態をリセット
-  const saveBtn = document.getElementById('save-btn');
-  if (saveBtn) {
-    saveBtn.disabled = false;
-    saveBtn.textContent = editId ? '更新する' : '保存する';
-  }
+  // 保存ボタン・フラグを必ず初期化してから開く
+  _resetSaveBtn();
   // フォームエラー表示をリセット
   const errEl = document.getElementById('form-error-msg');
   if (errEl) errEl.style.display = 'none';
-
-  // 保存フラグをリセット（前回の操作が途中で終わっていた場合の保険）
-  isSaving = false;
 
   document.getElementById('add-sheet').style.display = 'flex';
 }
 
 function closeAddSheet() {
   document.getElementById('add-sheet').style.display = 'none';
-  // フラグは finally で戻すが、ユーザーが手動で閉じた場合の保険
-  isSaving = false;
+  // ユーザーが手動で閉じた場合もフラグとボタンを完全リセット
+  _resetSaveBtn();
 }
 function closeSheetOutside(e) { if (e.target.id==='add-sheet') closeAddSheet(); }
 
@@ -959,138 +996,196 @@ function loadScript(src) {
 }
 
 // ===== TAGS =====
-function handleTagInput(e) {
-  const inp = document.getElementById('tags-input');
-  if (e.key==='Enter'||e.key===' '||e.key==='、') {
-    e.preventDefault();
-    const val = inp.value.trim();
-    if (val && !currentTags.includes(val)) {
-      currentTags.push(val);
-      renderTagsUI();
+// タグ文字列を配列に変換（カンマ・読点・全角カンマで分割してtrim）
+function splitTagString(str) {
+  return str.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+}
+
+// 重複なしでcurrentTagsに追加
+function addTagsUnique(arr) {
+  let added = false;
+  arr.forEach(t => {
+    if (t && !currentTags.some(c => c.trim().toLowerCase() === t.trim().toLowerCase())) {
+      currentTags.push(t.trim());
+      added = true;
     }
-    inp.value='';
-  } else if (e.key==='Backspace' && inp.value==='' && currentTags.length>0) {
+  });
+  if (added) renderTagsUI();
+}
+
+function handleTagInput(ev) {
+  const inp = document.getElementById('tags-input');
+  const val = inp.value;
+
+  // カンマ・読点が含まれたら即座に分割して確定
+  if (ev.key === ',' || ev.key === '，' || ev.key === '、') {
+    ev.preventDefault();
+    const parts = splitTagString(val);
+    addTagsUnique(parts);
+    inp.value = '';
+    return;
+  }
+
+  // Enter で確定（カンマなしの単一入力）
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    const parts = splitTagString(val);
+    addTagsUnique(parts);
+    inp.value = '';
+    return;
+  }
+
+  // Backspaceで最後のタグを削除
+  if (ev.key === 'Backspace' && val === '' && currentTags.length > 0) {
     currentTags.pop();
     renderTagsUI();
   }
 }
 
+// ペーストでカンマ区切り一括追加
+function handleTagPaste(ev) {
+  ev.preventDefault();
+  const pasted = (ev.clipboardData || window.clipboardData).getData('text');
+  const parts = splitTagString(pasted);
+  if (parts.length > 0) {
+    addTagsUnique(parts);
+    document.getElementById('tags-input').value = '';
+  }
+}
+
 function renderTagsUI() {
   const wrap = document.getElementById('tags-wrap');
-  const inp = document.getElementById('tags-input');
-  // タグ要素を再構築
-  while(wrap.firstChild && wrap.firstChild !== inp) wrap.removeChild(wrap.firstChild);
-  currentTags.forEach((t,i) => {
+  const inp  = document.getElementById('tags-input');
+  // タグSpanを再構築（inputより前に配置）
+  while (wrap.firstChild && wrap.firstChild !== inp) wrap.removeChild(wrap.firstChild);
+  currentTags.forEach((t, i) => {
     const span = document.createElement('span');
     span.className = 'tag';
-    span.innerHTML = `${esc(t)} <span class="tag-rm" onclick="removeTag(${i})">✕</span>`;
+    span.style.cssText = 'display:inline-flex;align-items:center;gap:4px;cursor:default;';
+    span.innerHTML = `${esc(t)}<span class="tag-rm" onclick="removeTag(${i})" style="cursor:pointer;font-size:11px;opacity:0.7;padding:0 2px;">✕</span>`;
     wrap.insertBefore(span, inp);
   });
 }
 
 function removeTag(i) {
-  currentTags.splice(i,1);
+  currentTags.splice(i, 1);
   renderTagsUI();
 }
 
 function renderTagSuggestions() {
-  const allTags = [...new Set(entries.flatMap(e=>e.tags||[]))].filter(t=>!currentTags.includes(t));
+  // 既存タグから候補を表示（大文字小文字無視で重複除外）
+  const currentNorm = currentTags.map(t => t.trim().toLowerCase());
+  const allTags = [...new Set(entries.flatMap(e => e.tags||[]))]
+    .filter(t => !currentNorm.includes(t.trim().toLowerCase()))
+    .sort();
   const sug = document.getElementById('tag-suggestions');
-  if (!allTags.length) { sug.style.display='none'; return; }
-  sug.style.display='flex';
-  sug.innerHTML = allTags.slice(0,8).map(t=>`<span class="tag" style="cursor:pointer" onclick="addTagSug('${esc(t)}')">${esc(t)}</span>`).join('');
+  if (!sug) return;
+  if (!allTags.length) { sug.style.display = 'none'; return; }
+  sug.style.display = 'flex';
+  sug.innerHTML = allTags.slice(0, 10).map(t =>
+    `<span class="tag tag-clickable" onclick="addTagSug('${esc(t)}')">${esc(t)}</span>`
+  ).join('');
 }
 
 function addTagSug(t) {
-  if (!currentTags.includes(t)) { currentTags.push(t); renderTagsUI(); }
+  addTagsUnique([t]);
 }
 
 // ===== SAVE =====
-// 二重送信防止フラグ
+// 二重送信防止フラグ（グローバル）
 let isSaving = false;
 
-async function saveEntry() {
-  // ── 二重タップ防止 ──────────────────────────
-  if (isSaving) return;
-  isSaving = true;
-
-  const saveBtn = document.getElementById('save-btn');
+// ボタンをリセットするヘルパー
+function _resetSaveBtn() {
+  isSaving = false;
+  const saveBtn   = document.getElementById('save-btn');
   const deleteBtn = document.getElementById('delete-btn');
+  if (saveBtn)   { saveBtn.disabled = false; saveBtn.textContent = currentEditId ? '更新する' : '保存する'; }
+  if (deleteBtn) { deleteBtn.disabled = false; }
+}
 
-  // ── ボタンをローディング状態に ──────────────
+async function saveEntry() {
+  // ── 1. 二重タップ防止 ──────────────────────
+  if (isSaving) return;
+
+  // ── 2. フォーム値を取得（ここでは副作用なし） ──
+  const eventName = document.getElementById('f-event').value.trim();
+  const date      = document.getElementById('f-date').value.trim();
+  const venue     = document.getElementById('f-venue').value.trim();
+  const memo      = document.getElementById('f-memo').value.trim();
+
+  // 入力中タグも確定させる
+  const pendingTag = document.getElementById('tags-input').value.trim();
+  if (pendingTag) addTagsUnique(splitTagString(pendingTag));
+
+  // ── 3. バリデーション（フラグを立てる前にチェック）──
+  if (!eventName && !date) {
+    showFormError('イベント名または日付を入力してください');
+    return;  // この時点ではisSaving=falseのまま → 再押下可能
+  }
+
+  // ── 4. フラグON・ボタンをローディング状態に ──
+  isSaving = true;
+  const saveBtn   = document.getElementById('save-btn');
+  const deleteBtn = document.getElementById('delete-btn');
   if (saveBtn) {
     saveBtn.disabled = true;
-    saveBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center;">'
-      + '<span style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>'
-      + '保存中...</span>';
+    saveBtn.innerHTML =
+      '<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center;">' +
+      '<span style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.35);' +
+      'border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;"></span>' +
+      '保存中...</span>';
   }
   if (deleteBtn) deleteBtn.disabled = true;
 
   try {
-    const eventName = document.getElementById('f-event').value.trim();
-    const date      = document.getElementById('f-date').value;
-    const venue     = document.getElementById('f-venue').value.trim();
-    const memo      = document.getElementById('f-memo').value.trim();
-
-    // タグ入力欄に残っている文字もタグとして追加
-    const tagInput = document.getElementById('tags-input').value.trim();
-    if (tagInput && !currentTags.includes(tagInput)) currentTags.push(tagInput);
-
-    // ── バリデーション（任意: イベント名か日付は必須） ──
-    if (!eventName && !date) {
-      showFormError('イベント名または日付を入力してください');
-      return; // finallyでフラグ・ボタンを戻す
-    }
-
-    // ── エントリ生成 ────────────────────────────
+    // ── 5. エントリ生成 ──────────────────────────
     const isEdit = !!currentEditId;
-    const existingEntry = isEdit ? entries.find(e => e.id === currentEditId) : null;
+    const existing = isEdit ? entries.find(e => e.id === currentEditId) : null;
     const entry = {
-      id: isEdit ? currentEditId : ('live_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
-      event: eventName,
+      id:        isEdit ? currentEditId : ('live_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7)),
+      event:     eventName,
       date,
       venue,
       memo,
-      tags: [...currentTags],
+      tags:      [...currentTags],          // string[] で保持
       imageData: currentImageData,
-      ocrText: window._ocrFullText || (existingEntry ? existingEntry.ocrText || '' : ''),
-      createdAt: existingEntry ? (existingEntry.createdAt || new Date().toISOString()) : new Date().toISOString(),
+      ocrText:   window._ocrFullText || (existing ? existing.ocrText || '' : ''),
+      createdAt: existing ? (existing.createdAt || new Date().toISOString()) : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    // ── IndexedDB 保存 ──────────────────────────
+    // ── 6. IndexedDB に保存 ──────────────────────
     await dbPut(entry);
 
-    // ── State を必ずDBから再取得して上書き ─────
+    // ── 7. State をDBから完全再取得（一覧との整合を保証）──
     entries = await dbAll();
 
-    // ── OCRキャッシュをリセット ─────────────────
+    // ── 8. OCRキャッシュをリセット ──────────────
     window._ocrFullText = '';
 
-    // ── UI を一括更新 ────────────────────────────
+    // ── 9. UI一括更新 ────────────────────────────
     renderList();
     renderTimeline();
     renderStats();
     renderFilterChips();
 
-    // ── モーダルを閉じてリスト画面へ ───────────
+    // ── 10. フラグとボタンを戻す（closeの前に）──
+    _resetSaveBtn();
+
+    // ── 11. モーダルを閉じる ─────────────────────
     closeAddSheet();
+
+    // ── 12. リスト画面へ強制遷移 ─────────────────
     if (currentTab !== 'list') switchTab('list');
 
-    // ── 成功トースト ─────────────────────────────
+    // ── 13. 成功トースト ──────────────────────────
     showToast(isEdit ? '✅ ライブを更新しました' : '✅ ライブを保存しました');
 
   } catch (err) {
-    console.error('[saveEntry] error:', err);
+    console.error('[saveEntry]', err);
+    _resetSaveBtn();
     showFormError('保存に失敗しました。もう一度お試しください。');
-  } finally {
-    // ── 必ずフラグ・ボタンを元に戻す ─────────────
-    isSaving = false;
-    if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.textContent = currentEditId ? '更新する' : '保存する';
-    }
-    if (deleteBtn) deleteBtn.disabled = false;
   }
 }
 
