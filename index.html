@@ -205,7 +205,6 @@
 </head>
 <body>
 <div id="app">
-  <!-- HEADER -->
   <div class="header">
     <div class="header-title">Live<span>Log</span></div>
     <div style="display:flex;align-items:center;gap:8px;">
@@ -214,9 +213,7 @@
     </div>
   </div>
 
-  <!-- PAGES -->
   <div class="page" id="main-page">
-    <!-- LIST PAGE -->
     <div class="page-section active" id="page-list">
       <div class="search-bar">
         <div class="search-input-wrap">
@@ -240,7 +237,6 @@
       </div>
     </div>
 
-    <!-- TIMELINE PAGE -->
     <div class="page-section" id="page-timeline">
       <div class="timeline-container" id="timeline-container">
         <div class="empty-state">
@@ -251,12 +247,10 @@
       </div>
     </div>
 
-    <!-- SETTINGS PAGE -->
     <div class="page-section" id="page-settings">
       <div class="settings-container">
         <div id="stats-display"></div>
 
-        <!-- バックアップ セクション -->
         <div class="settings-section">
           <div class="settings-title">バックアップ・復元</div>
 
@@ -288,7 +282,6 @@
           </div>
         </div>
 
-        <!-- データ管理 -->
         <div class="settings-section">
           <div class="settings-title">データ管理</div>
           <div class="settings-row" onclick="showDataInfo()">
@@ -313,7 +306,6 @@
           </div>
         </div>
 
-        <!-- 情報 -->
         <div class="settings-section">
           <div class="settings-title">情報</div>
           <div class="settings-row">
@@ -350,10 +342,8 @@
     </div>
   </div>
 
-  <!-- FAB -->
   <button class="fab" id="fab-btn" onclick="openAddSheet()" title="追加">＋</button>
 
-  <!-- NAV BAR -->
   <div class="nav-bar">
     <div class="nav-item active" id="nav-list" onclick="switchTab('list')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
@@ -370,7 +360,6 @@
   </div>
 </div>
 
-<!-- ADD/EDIT SHEET -->
 <div class="sheet-overlay" id="add-sheet" style="display:none" onclick="closeSheetOutside(event)">
   <div class="sheet" id="add-sheet-inner">
     <div class="sheet-handle"></div>
@@ -406,7 +395,7 @@
       <div class="form-group">
         <label>アーティスト</label>
         <div class="tags-input-wrap" id="tags-wrap">
-          <input type="text" id="tags-input" placeholder="名前を入力 → Enter or カンマ区切りで複数入力" onkeydown="handleTagInput(event)" onpaste="handleTagPaste(event)">
+          <input type="text" id="tags-input" placeholder="名前を入力 → Enter or カンマ区切りで複数入力" onkeydown="handleTagInput(event)" onpaste="handleTagPaste(event)" oninput="filterTagSuggestions()">
         </div>
         <div style="font-size:11px;color:var(--text3);margin-top:5px;">例: YOASOBI, Ado, 米津玄師 ／ Enter・カンマ・読点で確定</div>
         <div id="tag-suggestions" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;"></div>
@@ -423,13 +412,13 @@
   </div>
 </div>
 
-<!-- DETAIL SHEET -->
 <div class="sheet-overlay" id="detail-sheet" style="display:none" onclick="closeDetailOutside(event)">
   <div class="sheet" id="detail-sheet-inner">
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <span>詳細</span>
       <div style="display:flex; gap:8px;">
+        <button class="btn btn-danger btn-sm" id="detail-delete-btn" onclick="deleteDetailEntryDirect()" style="padding:6px 12px; font-size:12px;">🗑 削除</button>
         <button class="btn btn-secondary btn-sm" onclick="editCurrentDetail()" style="padding:6px 12px; font-size:12px;">✏️ 編集</button>
         <button class="close-btn" onclick="closeDetailSheet()">✕</button>
       </div>
@@ -438,13 +427,11 @@
   </div>
 </div>
 
-<!-- OCR OVERLAY -->
 <div class="ocr-overlay" id="ocr-overlay" style="display:none">
   <div class="ocr-spinner"></div>
   <div class="ocr-text" id="ocr-status">OCR処理中...</div>
 </div>
 
-<!-- ===== バックアップ作成シート ===== -->
 <div class="sheet-overlay" id="export-sheet" style="display:none" onclick="if(event.target.id==='export-sheet')closeExportSheet()">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -491,7 +478,6 @@
   </div>
 </div>
 
-<!-- ===== バックアップ復元シート ===== -->
 <div class="sheet-overlay" id="import-sheet" style="display:none" onclick="if(event.target.id==='import-sheet')closeImportSheet()">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -538,8 +524,8 @@
             </div>
           </label>
         </div>
-        <div id="overwrite-warning" style="display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--danger);line-height:1.6;">
-          ⚠️ 現在の <strong id="overwrite-current-count"></strong> 件のデータがすべて削除されます。この操作は取り消せません。
+        <div id="overwrite-warning" style="display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--danger);line-height:1.6;">
+          ⚠️ 現在の <strong id="overwrite-current-count"></strong> 件のデータがすべて削除されます。この操作は取り消せるません。
         </div>
         <div id="import-progress-wrap" style="display:none;margin-bottom:14px;">
           <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;">
@@ -559,7 +545,6 @@
   </div>
 </div>
 
-<!-- ===== データ情報モーダル ===== -->
 <div class="sheet-overlay" id="datainfo-sheet" style="display:none" onclick="if(event.target.id==='datainfo-sheet')closeDataInfoSheet()">
   <div class="sheet">
     <div class="sheet-handle"></div>
@@ -606,8 +591,6 @@ function dbPut(entry) {
   return new Promise((res, rej) => {
     const tx  = db.transaction(STORE, 'readwrite');
     const req = tx.objectStore(STORE).put(entry);
-    // Safari: req.onsuccess はトランザクションコミット前に発火することがある
-    // tx.oncomplete で resolve することでDBへの確実な書き込みを保証する
     tx.oncomplete = () => res();
     tx.onerror    = e  => rej(e.target.error);
     tx.onabort    = e  => rej(e.target.error);
@@ -644,12 +627,9 @@ openDB().then(async () => {
   renderStats();
   renderFilterChips();
   setToday();
-  // バージョンバッジを表示（APP_VERSION定数はバックアップシステム側で定義されるが
-  // JSはシングルスコープなので参照できる。ただし定義前アクセスを避けるため
-  // DOMContentLoaded後に設定する）
   requestAnimationFrame(() => {
     const badge = document.getElementById('version-badge');
-    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.2');
+    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.3');
     refreshSettingsLabels();
   });
 }).catch(e => console.error('[init]', e));
@@ -682,7 +662,6 @@ function renderList() {
       if (!hay.includes(q)) return false;
     }
     if (activeFilter !== 'all') {
-      // 完全一致・大文字小文字無視・trim後比較
       const filterNorm = activeFilter.trim().toLowerCase();
       const match = (e.tags||[]).some(t => t.trim().toLowerCase() === filterNorm);
       if (!match) return false;
@@ -690,36 +669,25 @@ function renderList() {
     return true;
   }).sort((a,b) => (b.date||'') > (a.date||'') ? 1 : -1);
 
-  // フィルターバナーの表示更新
   updateFilterBanner();
 
   const container = document.getElementById('list-container');
   const empty = document.getElementById('empty-state');
 
- if (filtered.length === 0) {
-  container.innerHTML = '';
-
-  if (empty) {
-    empty.style.display = '';
-
-    if (activeFilter !== 'all') {
-      empty.querySelector('.empty-title').textContent =
-        '該当する記録がありません';
-
-      empty.querySelector('.empty-sub').textContent =
-        `「${activeFilter}」のライブ記録が見つかりません`;
-
-    } else {
-      empty.querySelector('.empty-title').textContent =
-        '記録がまだありません';
-
-      empty.querySelector('.empty-sub').textContent =
-        '右下の＋ボタンからライブ参戦を記録しましょう';
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    if (empty) {
+      empty.style.display = '';
+      if (activeFilter !== 'all') {
+        empty.querySelector('.empty-title').textContent = '該当する記録がありません';
+        empty.querySelector('.empty-sub').textContent = `「${activeFilter}」のライブ記録が見つかりません`;
+      } else {
+        empty.querySelector('.empty-title').textContent = '記録がまだありません';
+        empty.querySelector('.empty-sub').textContent = '右下の＋ボタンからライブ参戦を記録しましょう';
+      }
     }
+    return;
   }
-
-  return;
-}
   if (empty) empty.style.display = 'none';
   container.innerHTML = filtered.map(e => `
     <div class="live-item" onclick="openDetail('${e.id}')">
@@ -741,7 +709,6 @@ function renderList() {
   `).join('');
 }
 
-// フィルターバナー表示制御
 function updateFilterBanner() {
   const banner = document.getElementById('filter-banner');
   const text   = document.getElementById('filter-banner-text');
@@ -771,8 +738,6 @@ function renderFilterChips() {
   });
 }
 
-// タグ要素のdata-tag属性からフィルタを実行するハンドラ
-// inline onclick内でesc()を通したURLエンコードを避けるために使用
 function handleTagFilter(el) {
   const tag = el && el.dataset && el.dataset.tag;
   if (tag) setFilter(tag);
@@ -783,14 +748,7 @@ function handleTagClick(event, el) {
 }
 
 function setFilter(f) {
-  console.log('[setFilter] before:', activeFilter);
-  console.log('[setFilter] new:', f);
-
   activeFilter = f;
-
-  console.log('[setFilter] after:', activeFilter);
-  console.log('[setFilter] entries:', entries);
-
   renderFilterChips();
   renderList();
 }
@@ -821,9 +779,12 @@ function renderTimeline() {
   Object.keys(byYear).sort((a,b)=>b-a).forEach(y => {
     const total = Object.values(byYear[y]).reduce((s,arr)=>s+arr.length,0);
     html += `<div class="year-group"><div class="year-header">${y}年 <span class="year-count">${total}公演</span></div>`;
-    Object.keys(byYear[y]).sort((a,b)=>b-a).forEach(m => {
+    // 月別の並び順（昇順に修正するため、a-bでソート）
+    Object.keys(byYear[y]).sort((a,b)=>a-b).forEach(m => {
       html += `<div class="month-header">${MONTHS[parseInt(m)-1]||m}</div>`;
-      byYear[y][m].forEach(e => {
+      // 月内の並び順（昇順に修正するため、a.date > b.date でソート）
+      const monthSorted = [...byYear[y][m]].sort((a,b) => (a.date||'') > (b.date||'') ? 1 : -1);
+      monthSorted.forEach(e => {
         html += `<div class="timeline-item" onclick="openDetail('${e.id}')">
           <div class="timeline-thumb">${e.imageData ? `<img src="${e.imageData}" style="width:52px;height:52px;border-radius:8px;object-fit:cover">` : '🎵'}</div>
           <div class="timeline-info">
@@ -868,1063 +829,5 @@ function openDetail(id) {
       ${e.date?`<div class="detail-field"><span class="detail-field-icon">📅</span><span class="detail-field-val">${fmtDate(e.date)}</span></div>`:''}
       ${e.venue?`<div class="detail-field"><span class="detail-field-icon">📍</span><span class="detail-field-val">${esc(e.venue)}</span></div>`:''}
       ${(e.tags&&e.tags.length)?'<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">' + e.tags.map(t=>'<span class="tag tag-clickable" data-tag="'+esc(t)+'" onclick="closeDetailSheet();handleTagFilter(this);switchTab(\'list\')">' + esc(t) + '</span>').join('') + '</div></div></div>':''}
-      ${e.memo?`<div class="section-label">メモ</div><div style="font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${esc(e.memo)}</div>`:''}
+      ${e.memo?`<div class="section-label">メモ</div><div style="font-size:14px;color:var(--text2);line-height:1.7;white-wrap:pre-wrap">${esc(e.memo)}</div>`:''}
       ${e.ocrText?`<div class="section-label">OCR全文</div><div class="ocr-result-box">${esc(e.ocrText)}</div>`:''}
-    </div>
-  `;
-  document.getElementById('detail-sheet').style.display = 'flex';
-}
-
-function closeDetailSheet() { document.getElementById('detail-sheet').style.display = 'none'; }
-function closeDetailOutside(e) { if (e.target.id==='detail-sheet') closeDetailSheet(); }
-function editCurrentDetail() { closeDetailSheet(); openAddSheet(currentDetailId); }
-
-// ===== ADD/EDIT SHEET =====
-function openAddSheet(editId=null) {
-  currentEditId = editId;
-  currentTags = [];
-  currentImageData = null;
-  clearForm();
-
-  if (editId) {
-    const e = entries.find(x=>x.id===editId);
-    if (e) {
-      document.getElementById('f-event').value = e.event||'';
-      document.getElementById('f-date').value = e.date||'';
-      document.getElementById('f-venue').value = e.venue||'';
-      document.getElementById('f-memo').value = e.memo||'';
-      currentTags = [...(e.tags||[])];
-      currentImageData = e.imageData||null;
-      if (e.imageData) {
-        const area = document.getElementById('upload-area');
-        area.classList.add('has-image');
-        area.innerHTML = `<img src="${e.imageData}"><input type="file" accept="image/*" id="img-input" onchange="handleImageSelect(event)">`;
-      }
-    }
-    document.getElementById('sheet-title').textContent = 'ライブを編集';
-    document.getElementById('delete-btn').style.display = 'block';
-  } else {
-    document.getElementById('sheet-title').textContent = 'ライブを記録';
-    document.getElementById('delete-btn').style.display = 'none';
-    setToday();
-  }
-  renderTagsUI();
-  renderTagSuggestions();
-
-  // 保存ボタン・フラグを必ず初期化してから開く
-  _resetSaveBtn();
-  // フォームエラー表示をリセット
-  const errEl = document.getElementById('form-error-msg');
-  if (errEl) errEl.style.display = 'none';
-
-  _showSheet('add-sheet');
-}
-
-function closeAddSheet() {
-  const sheet = document.getElementById('add-sheet');
-  if (sheet) {
-    sheet.style.display = 'none';   // iOS Safari: style直書き
-    sheet.classList.add('hidden');  // class も付与（ダブル保険）
-  }
-  _resetSaveBtn();
-}
-
-// openAddSheet から呼ばれる際に hidden を除去
-function _showSheet(id) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  el.classList.remove('hidden');
-  el.style.display = 'flex';
-}
-function closeSheetOutside(e) { if (e.target.id==='add-sheet') closeAddSheet(); }
-
-function clearForm() {
-  ['f-event','f-date','f-venue','f-memo'].forEach(id => document.getElementById(id).value='');
-  const area = document.getElementById('upload-area');
-  area.classList.remove('has-image');
-  area.innerHTML = `<input type="file" accept="image/*" id="img-input" onchange="handleImageSelect(event)"><div class="upload-icon">📷</div><div class="upload-text">タップして撮影・選択</div><div class="upload-sub">撮影するとOCRで自動入力を試みます</div>`;
-  document.getElementById('ocr-result-preview').style.display = 'none';
-}
-
-// ===== IMAGE + OCR =====
-async function handleImageSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const reader = new FileReader();
-
-  reader.onload = async e => {
-    currentImageData = e.target.result;
-
-    const area = document.getElementById('upload-area');
-    area.classList.add('has-image');
-
-    // 既存画像を削除
-    const oldImg = area.querySelector('img');
-    if (oldImg) oldImg.remove();
-
-    // 新しい画像を追加
-    const img = document.createElement('img');
-    img.src = currentImageData;
-    img.style.maxHeight = '220px';
-
-    // inputは作り直さず既存を使う
-    const input = document.getElementById('img-input');
-    area.insertBefore(img, input);
-
-    await runOCR(currentImageData);
-  };
-
-  reader.readAsDataURL(file);
-}
-
-async function runOCR(imageData) {
-  const overlay = document.getElementById('ocr-overlay');
-  overlay.style.display = 'flex';
-  document.getElementById('ocr-status').textContent = 'Tesseract.js 読み込み中...';
-
-  try {
-    if (!window.Tesseract) {
-      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
-    }
-    document.getElementById('ocr-status').textContent = 'OCR処理中... (日本語)';
-
-    const result = await Tesseract.recognize(imageData, 'jpn+eng', {
-      logger: m => {
-        if (m.status === 'recognizing text') {
-          document.getElementById('ocr-status').textContent = `認識中 ${Math.round(m.progress*100)}%`;
-        }
-      }
-    });
-
-    const text = result.data.text;
-    parseOCRText(text);
-    document.getElementById('ocr-result-preview').style.display = 'block';
-    window._ocrFullText = text;
-  } catch(err) {
-    console.error('OCR error:', err);
-    showToast('OCR失敗 — 手動で入力してください');
-  } finally {
-    overlay.style.display = 'none';
-  }
-}
-
-function parseOCRText(text) {
-  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
-
-  // 日付候補: 2026年5月16日, 2026/05/16, 2026.05.16, 5/16(土) etc.
-  const datePatterns = [
-    /(\d{4})[年\/\.\-](\d{1,2})[月\/\.\-](\d{1,2})/,
-    /(\d{1,2})[\/\.](\d{1,2})\s*[（(].[）)]/,
-  ];
-  let foundDate = null;
-  for (const line of lines) {
-    for (const pat of datePatterns) {
-      const m = line.match(pat);
-      if (m && !foundDate) {
-        if (m[1] && parseInt(m[1])>1990) {
-          const y=m[1], mo=m[2].padStart(2,'0'), d=m[3].padStart(2,'0');
-          foundDate = `${y}-${mo}-${d}`;
-        }
-      }
-    }
-    if (foundDate) break;
-  }
-  if (foundDate && !document.getElementById('f-date').value) {
-    document.getElementById('f-date').value = foundDate;
-  }
-
-  // 会場候補
-  const venueKeywords = ['ホール','アリーナ','ドーム','スタジアム','武道館','ガーデン','ライブハウス','HALL','ARENA','DOME','STADIUM','CENTER','センター','劇場','シアター','ZEPP','Zepp'];
-  for (const line of lines) {
-    if (venueKeywords.some(k=>line.includes(k)) && line.length < 40) {
-      if (!document.getElementById('f-venue').value) {
-        document.getElementById('f-venue').value = line;
-        break;
-      }
-    }
-  }
-
-  // イベント名候補: 大きなフォント=長い行, TOUR等を含む行
-  const tourKeywords = ['TOUR','ツアー','LIVE','ライブ','CONCERT','コンサート','フェス','FES','FESTIVAL'];
-  for (const line of lines) {
-    if (tourKeywords.some(k=>line.toUpperCase().includes(k)) && line.length < 60) {
-      if (!document.getElementById('f-event').value) {
-        document.getElementById('f-event').value = line;
-        break;
-      }
-    }
-  }
-  // フォールバック: 最初の比較的長い行
-  if (!document.getElementById('f-event').value) {
-    const candidate = lines.find(l=>l.length>4&&l.length<50);
-    if (candidate) document.getElementById('f-event').value = candidate;
-  }
-}
-
-function loadScript(src) {
-  return new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src=src; s.onload=res; s.onerror=rej;
-    document.head.appendChild(s);
-  });
-}
-
-// ===== TAGS =====
-// タグ文字列を配列に変換（カンマ・読点・全角カンマで分割してtrim）
-function splitTagString(str) {
-  return str.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
-}
-
-// 重複なしでcurrentTagsに追加
-function addTagsUnique(arr) {
-  let added = false;
-  arr.forEach(t => {
-    if (t && !currentTags.some(c => c.trim().toLowerCase() === t.trim().toLowerCase())) {
-      currentTags.push(t.trim());
-      added = true;
-    }
-  });
-  if (added) renderTagsUI();
-}
-
-function handleTagInput(ev) {
-  const inp = document.getElementById('tags-input');
-  const val = inp.value;
-
-  // カンマ・読点が含まれたら即座に分割して確定
-  if (ev.key === ',' || ev.key === '，' || ev.key === '、') {
-    ev.preventDefault();
-    const parts = splitTagString(val);
-    addTagsUnique(parts);
-    inp.value = '';
-    return;
-  }
-
-  // Enter で確定（カンマなしの単一入力）
-  if (ev.key === 'Enter') {
-    ev.preventDefault();
-    const parts = splitTagString(val);
-    addTagsUnique(parts);
-    inp.value = '';
-    return;
-  }
-
-  // Backspaceで最後のタグを削除
-  if (ev.key === 'Backspace' && val === '' && currentTags.length > 0) {
-    currentTags.pop();
-    renderTagsUI();
-  }
-}
-
-// ペーストでカンマ区切り一括追加
-function handleTagPaste(ev) {
-  ev.preventDefault();
-  const pasted = (ev.clipboardData || window.clipboardData).getData('text');
-  const parts = splitTagString(pasted);
-  if (parts.length > 0) {
-    addTagsUnique(parts);
-    document.getElementById('tags-input').value = '';
-  }
-}
-
-function renderTagsUI() {
-  const wrap = document.getElementById('tags-wrap');
-  const inp  = document.getElementById('tags-input');
-  // タグSpanを再構築（inputより前に配置）
-  while (wrap.firstChild && wrap.firstChild !== inp) wrap.removeChild(wrap.firstChild);
-  currentTags.forEach((t, i) => {
-    const span = document.createElement('span');
-    span.className = 'tag';
-    span.style.cssText = 'display:inline-flex;align-items:center;gap:4px;cursor:default;';
-    span.innerHTML = `${esc(t)}<span class="tag-rm" onclick="removeTag(${i})" style="cursor:pointer;font-size:11px;opacity:0.7;padding:0 2px;">✕</span>`;
-    wrap.insertBefore(span, inp);
-  });
-}
-
-function removeTag(i) {
-  currentTags.splice(i, 1);
-  renderTagsUI();
-}
-
-function renderTagSuggestions() {
-  // 既存タグから候補を表示（大文字小文字無視で重複除外）
-  const currentNorm = currentTags.map(t => t.trim().toLowerCase());
-  const allTags = [...new Set(entries.flatMap(e => e.tags||[]))]
-    .filter(t => !currentNorm.includes(t.trim().toLowerCase()))
-    .sort();
-  const sug = document.getElementById('tag-suggestions');
-  if (!sug) return;
-  if (!allTags.length) { sug.style.display = 'none'; return; }
-  sug.style.display = 'flex';
-  sug.innerHTML = allTags.slice(0, 10).map(t =>
-    '<span class="tag tag-clickable" data-tag="' + esc(t) + '" onclick="addTagSug(this.dataset.tag)">' + esc(t) + '</span>'
-  ).join('');
-}
-
-function addTagSug(t) {
-  addTagsUnique([t]);
-}
-
-// ===== SAVE =====
-// ── iOS Safari PWA 対応メモ ──────────────────────────────────────────
-// Safariでは await後のDOM操作がUIスレッドに即反映されないことがある。
-// waitFrame() で必ず1フレーム描画サイクルを挟み、display切り替えを確実にする。
-// モーダルのopen/closeはclassで制御（style直書きより確実）。
-// ─────────────────────────────────────────────────────────────────────
-
-// UIスレッドに1フレーム渡すユーティリティ（iOS Safari 対策）
-function waitFrame() {
-  return new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
-}
-
-// 二重送信防止フラグ（グローバル）
-let isSaving = false;
-
-// ボタンをリセットするヘルパー（どこからでも安全に呼べる）
-function _resetSaveBtn() {
-  isSaving = false;
-  const saveBtn   = document.getElementById('save-btn');
-  const deleteBtn = document.getElementById('delete-btn');
-  if (saveBtn) {
-    saveBtn.disabled  = false;
-    saveBtn.textContent = currentEditId ? '更新する' : '保存する';
-  }
-  if (deleteBtn) {
-    deleteBtn.disabled = false;
-  }
-}
-
-async function saveEntry() {
-  // ── STEP 1: 二重タップ防止 ─────────────────────────────────────────
-  if (isSaving) {
-    console.log('[saveEntry] blocked: already saving');
-    return;
-  }
-
-  // ── STEP 2: フォーム値収集（副作用なし）──────────────────────────
-  const eventName = document.getElementById('f-event').value.trim();
-  const date      = document.getElementById('f-date').value.trim();
-  const venue     = document.getElementById('f-venue').value.trim();
-  const memo      = document.getElementById('f-memo').value.trim();
-
-  // 入力途中のタグを確定する
-  const pendingTag = document.getElementById('tags-input').value.trim();
-  if (pendingTag) {
-    addTagsUnique(splitTagString(pendingTag));
-    document.getElementById('tags-input').value = '';
-  }
-
-  // ── STEP 3: バリデーション（フラグON前に実施 → 失敗でも再押下可能）──
-  if (!eventName && !date) {
-    showFormError('イベント名または日付を入力してください');
-    return;
-  }
-
-  // ── STEP 4: フラグON・ボタンをローディングへ ──────────────────────
-  isSaving = true;
-  const saveBtn   = document.getElementById('save-btn');
-  const deleteBtn = document.getElementById('delete-btn');
-  if (saveBtn) {
-    saveBtn.disabled = true;
-    saveBtn.innerHTML =
-      '<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center;">' +
-      '<span style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.35);' +
-      'border-top-color:#fff;border-radius:50%;' +
-      'animation:spin 0.7s linear infinite;display:inline-block;flex-shrink:0;"></span>' +
-      '保存中...</span>';
-  }
-  if (deleteBtn) deleteBtn.disabled = true;
-
-  // 1フレーム空けてローディングUIを確実に描画（iOS Safari 対策）
-  await waitFrame();
-
-  try {
-    // ── STEP 5: エントリオブジェクト生成 ──────────────────────────────
-    const isEdit   = !!currentEditId;
-    const existing = isEdit ? entries.find(e => e.id === currentEditId) : null;
-    const entryId  = isEdit
-      ? currentEditId
-      : ('live_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
-
-    const entry = {
-      id:        entryId,
-      event:     eventName,
-      date,
-      venue,
-      memo,
-      tags:      [...currentTags],   // 常に string[] で保持
-      imageData: currentImageData,
-      ocrText:   window._ocrFullText || (existing ? existing.ocrText || '' : ''),
-      createdAt: existing
-        ? (existing.createdAt || new Date().toISOString())
-        : new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-
-    console.log('[saveEntry] saving id=', entry.id, 'isEdit=', isEdit);
-
-    // ── STEP 6: IndexedDB へ書き込み（完了まで待機）─────────────────
-    await dbPut(entry);
-    console.log('[saveEntry] save completed ✅');
-
-    // ── STEP 7: DB から state を完全再取得（スナップショットを捨てて再読込）─
-    entries = await dbAll();
-    console.log('[saveEntry] state refreshed, total=', entries.length);
-
-    // ── STEP 8: OCRキャッシュをクリア ──────────────────────────────
-    window._ocrFullText = '';
-
-    // ── STEP 9: UI全体を更新（entries更新直後・モーダルclose前に実行）─
-    //    ここで renderList() を先に呼ぶことで、iOS PWA でも
-    //    モーダルclose後に最新データが一覧に表示される
-    renderList();
-    renderTimeline();
-    renderStats();
-    renderFilterChips();
-    console.log('[saveEntry] list refreshed ✅');
-
-    // ── STEP 10: フラグとボタンをリセット ──────────────────────────
-    _resetSaveBtn();
-    // currentEditId をここでリセット（_resetSaveBtnの後）
-    currentEditId = null;
-
-    // ── STEP 11: モーダルを閉じる（iOS Safari: style + class 両方）──
-    const sheet = document.getElementById('add-sheet');
-    if (sheet) {
-      sheet.style.display = 'none';
-      sheet.classList.add('hidden');
-    }
-    console.log('[saveEntry] modal closed ✅');
-
-    // ── STEP 12: リスト画面へ強制遷移 ──────────────────────────────
-    //    すでにlistタブでも再遷移してタブ表示を確定させる
-    currentTab = 'list';
-    ['list','timeline','settings'].forEach(t => {
-      const page = document.getElementById('page-' + t);
-      const nav  = document.getElementById('nav-'  + t);
-      if (page) page.classList.toggle('active', t === 'list');
-      if (nav)  nav.classList.toggle('active',  t === 'list');
-    });
-    const fab = document.getElementById('fab-btn');
-    if (fab) fab.style.display = 'flex';
-
-    // ── STEP 13: 成功トースト ───────────────────────────────────────
-    showToast(isEdit ? '✅ ライブを更新しました' : '✅ ライブを保存しました');
-
-  } catch (err) {
-    console.error('[saveEntry] ERROR:', err);
-    _resetSaveBtn();
-    showFormError('保存に失敗しました。もう一度お試しください。');
-  }
-}
-
-// フォーム内エラー表示
-function showFormError(msg) {
-  let el = document.getElementById('form-error-msg');
-  if (!el) {
-    el = document.createElement('div');
-    el.id = 'form-error-msg';
-    el.style.cssText = 'background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.4);border-radius:8px;padding:10px 14px;font-size:13px;color:#f87171;margin-top:10px;';
-    const saveBtn = document.getElementById('save-btn');
-    if (saveBtn && saveBtn.parentNode) saveBtn.parentNode.insertAdjacentElement('afterend', el);
-  }
-  el.textContent = '⚠️ ' + msg;
-  el.style.display = 'block';
-  // 3秒で消す
-  setTimeout(() => { if (el) el.style.display = 'none'; }, 3000);
-}
-
-async function deleteCurrentEntry() {
-  if (!currentEditId) return;
-  if (!confirm('このライブ記録を削除しますか？')) return;
-
-  const deleteBtn = document.getElementById('delete-btn');
-  if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = '削除中...'; }
-
-  try {
-    await dbDelete(currentEditId);
-    entries = await dbAll();
-    renderList();
-    renderTimeline();
-    renderStats();
-    renderFilterChips();
-    closeAddSheet();
-    if (currentTab !== 'list') switchTab('list');
-    showToast('🗑 削除しました');
-  } catch (err) {
-    console.error('[deleteEntry] error:', err);
-    showToast('削除に失敗しました');
-    if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = '🗑 削除'; }
-  }
-}
-
-// ===== BACKUP SYSTEM =====
-// ---- バックアップJSONスキーマ ----
-// {
-//   schemaVersion: 2,           バージョン管理用
-//   appVersion: "1.0.0",
-//   exportedAt: ISO8601,
-//   exportedAtLocal: "2026-05-16 14:30",
-//   memo: string,               ユーザーメモ
-//   stats: { total, withImage, totalSizeKB },
-//   entries: [ ...全エントリ ]  imageDataはBase64
-// }
-
-const APP_VERSION = "1.2";   // ← ここだけ変えれば全体反映
-const SCHEMA_VERSION = 2;
-const BACKUP_HISTORY_KEY = "livelog_backup_history";
-let exportIncludeImages = true;
-let pendingImportData = null;  // ステップ2に渡す解析済みデータ
-
-// ---- バックアップ履歴 (localStorage) ----
-function getBackupHistory() {
-  try { return JSON.parse(localStorage.getItem(BACKUP_HISTORY_KEY) || '[]'); }
-  catch { return []; }
-}
-function addBackupHistory(record) {
-  const hist = getBackupHistory();
-  hist.unshift(record);
-  localStorage.setItem(BACKUP_HISTORY_KEY, JSON.stringify(hist.slice(0, 10)));
-}
-
-// ---- 設定タブ表示更新 ----
-function refreshSettingsLabels() {
-  // アプリバージョン
-  const verEl = document.getElementById('app-version-label');
-  if (verEl) verEl.textContent = `v${APP_VERSION} — スキーマ v${SCHEMA_VERSION}`;
-
-  // 最終バックアップ
-  const hist = getBackupHistory();
-  const lastEl = document.getElementById('last-export-label');
-  if (lastEl) {
-    if (hist.length > 0) {
-      const last = hist[0];
-      lastEl.textContent = `最終: ${last.dateLocal}（${last.count}件）`;
-    } else {
-      lastEl.textContent = '画像を含む全データをJSONで保存';
-    }
-  }
-
-  // バックアップ履歴一覧
-  const wrap = document.getElementById('backup-history-wrap');
-  const list = document.getElementById('backup-history-list');
-  if (!wrap || !list) return;
-  if (hist.length === 0) { wrap.style.display = 'none'; return; }
-  wrap.style.display = 'block';
-  list.innerHTML = hist.slice(0, 3).map(h => `
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
-      <div>
-        <div style="font-size:13px;font-weight:500;">${esc(h.dateLocal)}</div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${h.count}件 · ${h.sizeKB}KB${h.memo ? ' · ' + esc(h.memo) : ''}</div>
-      </div>
-      <span style="font-size:11px;color:var(--text3);">${h.withImages ? '📷' : '📄'}</span>
-    </div>
-  `).join('');
-
-  // データサイズ
-  calcDataSize();
-}
-
-async function calcDataSize() {
-  const el = document.getElementById('data-size-label');
-  if (!el) return;
-  try {
-    const all = await dbAll();
-    const json = JSON.stringify(all);
-    const kb = Math.round(json.length / 1024);
-    const imgCount = all.filter(e => e.imageData).length;
-    el.textContent = `${all.length}件 · 約${kb}KB · 画像${imgCount}枚`;
-  } catch { el.textContent = '計算できませんでした'; }
-}
-
-// ---- エクスポートシート ----
-async function openExportSheet() {
-  const all = await dbAll();
-  const imgCount = all.filter(e => e.imageData).length;
-  const today = new Date();
-  const dateStr = today.toISOString().slice(0,10);
-
-  // ファイル名セット
-  document.getElementById('export-filename').value = `livelog_backup_${dateStr}.json`;
-  document.getElementById('export-memo').value = '';
-
-  // 件数カード
-  document.getElementById('export-counts').innerHTML = `
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
-      <div style="font-size:22px;font-weight:700;color:var(--accent);">${all.length}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">ライブ記録</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
-      <div style="font-size:22px;font-weight:700;color:var(--accent);">${imgCount}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">画像あり</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
-      <div style="font-size:22px;font-weight:700;color:var(--accent);">${[...new Set(all.flatMap(e=>e.tags||[]))].length}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">アーティスト</div>
-    </div>
-    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
-      <div style="font-size:22px;font-weight:700;color:var(--accent);">${[...new Set(all.map(e=>e.venue).filter(Boolean))].length}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">会場</div>
-    </div>
-  `;
-
-  // トグル状態リセット
-  exportIncludeImages = true;
-  document.getElementById('toggle-track').style.background = 'var(--accent2)';
-  document.getElementById('toggle-thumb').style.transform = 'translateX(18px)';
-
-  updateExportSizeEst(all);
-  document.getElementById('export-progress-wrap').style.display = 'none';
-  document.getElementById('export-btn').disabled = false;
-  document.getElementById('export-btn').textContent = '📤 バックアップを作成する';
-  document.getElementById('export-sheet').style.display = 'flex';
-}
-
-async function updateExportSizeEst(allData) {
-  let size = 0;
-  if (exportIncludeImages) {
-    size = JSON.stringify(allData).length;
-  } else {
-    const stripped = allData.map(e => { const c = {...e}; delete c.imageData; return c; });
-    size = JSON.stringify(stripped).length;
-  }
-  const kb = Math.round(size / 1024);
-  const el = document.getElementById('export-size-est');
-  if (el) el.textContent = `推定ファイルサイズ: 約 ${kb.toLocaleString()} KB`;
-}
-
-function toggleExportImages() {
-  exportIncludeImages = !exportIncludeImages;
-  const track = document.getElementById('toggle-track');
-  const thumb = document.getElementById('toggle-thumb');
-  track.style.background = exportIncludeImages ? 'var(--accent2)' : 'var(--bg4)';
-  thumb.style.transform = exportIncludeImages ? 'translateX(18px)' : 'translateX(0)';
-  dbAll().then(all => updateExportSizeEst(all));
-}
-
-function closeExportSheet() {
-  document.getElementById('export-sheet').style.display = 'none';
-}
-
-async function executeExport() {
-  const btn = document.getElementById('export-btn');
-  const progressWrap = document.getElementById('export-progress-wrap');
-  const progressBar = document.getElementById('export-progress-bar');
-  const progressLabel = document.getElementById('export-progress-label');
-  const progressPct = document.getElementById('export-progress-pct');
-
-  btn.disabled = true;
-  progressWrap.style.display = 'block';
-
-  try {
-    const all = await dbAll();
-    const memo = document.getElementById('export-memo').value.trim();
-    const now = new Date();
-    const localStr = now.toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
-
-    // 進捗付きでエントリを処理
-    const processed = [];
-    for (let i = 0; i < all.length; i++) {
-      const entry = {...all[i]};
-      if (!exportIncludeImages) delete entry.imageData;
-      processed.push(entry);
-
-      const pct = Math.round((i + 1) / all.length * 80);
-      progressBar.style.width = pct + '%';
-      progressPct.textContent = pct + '%';
-      progressLabel.textContent = `処理中 ${i+1}/${all.length}件...`;
-      // UIを更新するための非同期待機
-      if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
-    }
-
-    progressLabel.textContent = 'ファイルを生成中...';
-    progressBar.style.width = '90%';
-    await new Promise(r => setTimeout(r, 0));
-
-    const imgCount = all.filter(e => e.imageData).length;
-    const totalSizeKB = Math.round(JSON.stringify(processed).length / 1024);
-
-    const backup = {
-      schemaVersion: SCHEMA_VERSION,
-      appVersion: APP_VERSION,
-      exportedAt: now.toISOString(),
-      exportedAtLocal: localStr,
-      memo: memo || '',
-      stats: {
-        total: all.length,
-        withImage: imgCount,
-        totalSizeKB,
-        includesImages: exportIncludeImages,
-      },
-      entries: processed,
-    };
-
-    const json = JSON.stringify(backup, null, 2);
-    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const filename = document.getElementById('export-filename').value.trim()
-      || `livelog_backup_${now.toISOString().slice(0,10)}.json`;
-
-    progressBar.style.width = '100%';
-    progressPct.textContent = '100%';
-    progressLabel.textContent = 'ダウンロード中...';
-
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename.endsWith('.json') ? filename : filename + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
-
-    // 履歴記録
-    addBackupHistory({
-      dateLocal: localStr,
-      count: all.length,
-      sizeKB: totalSizeKB,
-      withImages: exportIncludeImages,
-      memo,
-      filename: a.download,
-    });
-
-    await new Promise(r => setTimeout(r, 600));
-    closeExportSheet();
-    refreshSettingsLabels();
-    showToast(`📤 ${all.length}件をバックアップしました`);
-
-  } catch(err) {
-    console.error(err);
-    showToast('バックアップに失敗しました');
-    btn.disabled = false;
-    btn.textContent = '📤 バックアップを作成する';
-    progressWrap.style.display = 'none';
-  }
-}
-
-// ---- インポートシート ----
-function openImportSheet() {
-  resetImportStep();
-  document.getElementById('import-sheet').style.display = 'flex';
-}
-
-function closeImportSheet() {
-  document.getElementById('import-sheet').style.display = 'none';
-  document.getElementById('import-file').value = '';
-  pendingImportData = null;
-}
-
-function resetImportStep() {
-  document.getElementById('import-step1').style.display = 'block';
-  document.getElementById('import-step2').style.display = 'none';
-  document.getElementById('import-progress-wrap').style.display = 'none';
-  document.getElementById('import-file').value = '';
-  pendingImportData = null;
-  // ラジオをマージに戻す
-  const radios = document.querySelectorAll('input[name="import-mode"]');
-  radios.forEach(r => r.checked = r.value === 'merge');
-  document.getElementById('overwrite-warning').style.display = 'none';
-}
-
-async function handleImportFile(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  try {
-    const text = await file.text();
-    const data = JSON.parse(text);
-
-    // スキーマ検証
-    const list = data.entries || (Array.isArray(data) ? data : null);
-    if (!list || !list.length) {
-      showToast('有効なバックアップデータが見つかりません');
-      event.target.value = '';
-      return;
-    }
-
-    pendingImportData = { raw: data, entries: list };
-
-    // バックアップ情報を表示
-    const schemaVer = data.schemaVersion || 1;
-    const appVer = data.appVersion || '不明';
-    const exportedAt = data.exportedAtLocal || (data.exportedAt ? new Date(data.exportedAt).toLocaleString('ja-JP') : '不明');
-    const stats = data.stats || {};
-    const hasImages = list.some(e => e.imageData);
-
-    document.getElementById('import-backup-info').innerHTML = `
-      <div style="display:grid;gap:6px;font-size:13px;">
-        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
-          <span style="color:var(--text3);">作成日時</span>
-          <span style="font-weight:500;">${esc(exportedAt)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
-          <span style="color:var(--text3);">ライブ記録数</span>
-          <span style="font-weight:500;color:var(--accent);">${list.length}件</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
-          <span style="color:var(--text3);">画像データ</span>
-          <span style="font-weight:500;">${hasImages ? '含まれています 📷' : '含まれていません'}</span>
-        </div>
-        ${data.memo ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
-          <span style="color:var(--text3);">メモ</span>
-          <span style="font-weight:500;">${esc(data.memo)}</span>
-        </div>` : ''}
-        <div style="display:flex;justify-content:space-between;padding:4px 0;">
-          <span style="color:var(--text3);">スキーマ / アプリ</span>
-          <span style="font-weight:500;">v${schemaVer} / ${esc(appVer)}</span>
-        </div>
-        ${schemaVer > SCHEMA_VERSION ? `<div style="color:var(--danger);font-size:12px;margin-top:4px;">⚠️ このバックアップは新しいバージョンで作成されています。一部のデータが失われる可能性があります。</div>` : ''}
-      </div>
-    `;
-
-    // 上書き警告の件数を更新
-    document.getElementById('overwrite-current-count').textContent = `${entries.length}`;
-    updateImportMode();
-
-    document.getElementById('import-step1').style.display = 'none';
-    document.getElementById('import-step2').style.display = 'block';
-
-    // インポートシートを開いていない場合は開く
-    document.getElementById('import-sheet').style.display = 'flex';
-
-  } catch(err) {
-    console.error(err);
-    showToast('JSONファイルの解析に失敗しました');
-    event.target.value = '';
-  }
-}
-
-function updateImportMode() {
-  const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
-  const warn = document.getElementById('overwrite-warning');
-  warn.style.display = mode === 'overwrite' ? 'block' : 'none';
-  const btn = document.getElementById('import-execute-btn');
-  btn.textContent = mode === 'overwrite' ? '⚠️ 上書きして復元する' : '✓ マージして復元する';
-  btn.style.background = mode === 'overwrite'
-    ? 'linear-gradient(135deg,#b91c1c,#ef4444)'
-    : 'linear-gradient(135deg,var(--accent3),var(--accent2))';
-}
-
-async function executeImport() {
-  if (!pendingImportData) return;
-  const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
-  const list = pendingImportData.entries;
-
-  // 最終確認
-  if (mode === 'overwrite') {
-    if (!confirm(`⚠️ 現在の${entries.length}件をすべて削除してバックアップ${list.length}件を復元します。
-
-この操作は取り消せません。続けますか？`)) return;
-  }
-
-  const progressWrap = document.getElementById('import-progress-wrap');
-  const progressBar = document.getElementById('import-progress-bar');
-  const progressLabel = document.getElementById('import-progress-label');
-  const progressPct = document.getElementById('import-progress-pct');
-  const btn = document.getElementById('import-execute-btn');
-
-  btn.disabled = true;
-  progressWrap.style.display = 'block';
-
-  try {
-    // 上書きモード: 既存データをすべて削除
-    if (mode === 'overwrite') {
-      progressLabel.textContent = '既存データを削除中...';
-      const existing = await dbAll();
-      for (let i = 0; i < existing.length; i++) {
-        await dbDelete(existing[i].id);
-        const pct = Math.round((i + 1) / existing.length * 30);
-        progressBar.style.width = pct + '%';
-        progressPct.textContent = pct + '%';
-        if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
-      }
-    }
-
-    // エントリをインポート
-    for (let i = 0; i < list.length; i++) {
-      const entry = list[i];
-      // IDがない場合は生成
-      if (!entry.id) entry.id = 'live_' + Date.now() + '_' + i;
-      // importedAt フラグ追加
-      entry.importedAt = new Date().toISOString();
-      await dbPut(entry);
-
-      const base = mode === 'overwrite' ? 30 : 0;
-      const pct = base + Math.round((i + 1) / list.length * (100 - base));
-      progressBar.style.width = pct + '%';
-      progressPct.textContent = pct + '%';
-      progressLabel.textContent = `インポート中 ${i+1}/${list.length}件...`;
-      if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
-    }
-
-    progressBar.style.width = '100%';
-    progressPct.textContent = '100%';
-    progressLabel.textContent = '完了！';
-
-    entries = await dbAll();
-    renderList();
-    renderTimeline();
-    renderStats();
-    renderFilterChips();
-    refreshSettingsLabels();
-
-    await new Promise(r => setTimeout(r, 500));
-    closeImportSheet();
-    showToast(`📥 ${list.length}件を復元しました`);
-
-  } catch(err) {
-    console.error(err);
-    showToast('復元中にエラーが発生しました');
-    btn.disabled = false;
-    progressWrap.style.display = 'none';
-  }
-}
-
-// ---- データ情報モーダル ----
-async function showDataInfo() {
-  const all = await dbAll();
-  const json = JSON.stringify(all);
-  const totalKB = Math.round(json.length / 1024);
-  const imgKB = Math.round(JSON.stringify(all.map(e=>({imageData:e.imageData||''}))).length / 1024);
-  const metaKB = totalKB - imgKB;
-
-  const years = [...new Set(all.map(e=>e.date?.slice(0,4)).filter(Boolean))].sort((a,b)=>b-a);
-  const artists = [...new Set(all.flatMap(e=>e.tags||[]))].sort();
-  const venues = [...new Set(all.map(e=>e.venue).filter(Boolean))].sort();
-
-  document.getElementById('datainfo-content').innerHTML = `
-    <div style="margin-bottom:20px;">
-      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:10px;">ストレージ使用量</div>
-      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-          <span style="font-size:13px;color:var(--text2);">全体</span>
-          <span style="font-size:13px;font-weight:600;">${totalKB.toLocaleString()} KB</span>
-        </div>
-        <div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-bottom:8px;">
-          <div style="height:100%;width:${Math.min(imgKB/totalKB*100,100)}%;background:linear-gradient(90deg,var(--accent3),var(--accent));border-radius:3px;"></div>
-        </div>
-        <div style="display:flex;gap:16px;font-size:11px;color:var(--text3);">
-          <span>📷 画像: ${imgKB.toLocaleString()} KB</span>
-          <span>📝 メタデータ: ${metaKB.toLocaleString()} KB</span>
-        </div>
-      </div>
-    </div>
-
-    <div style="margin-bottom:20px;">
-      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:10px;">年別内訳</div>
-      ${years.map(y => {
-        const cnt = all.filter(e=>e.date?.startsWith(y)).length;
-        return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
-          <span style="color:var(--text2);">${y}年</span>
-          <span style="font-weight:600;color:var(--accent);">${cnt}公演</span>
-        </div>`;
-      }).join('') || '<div style="color:var(--text3);font-size:13px;">データなし</div>'}
-    </div>
-
-    ${artists.length ? `
-    <div style="margin-bottom:20px;">
-      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:10px;">アーティスト (${artists.length})</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        ${artists.slice(0,20).map(a => `<span class="tag">${esc(a)}</span>`).join('')}
-        ${artists.length > 20 ? `<span style="font-size:11px;color:var(--text3);padding:4px;">他${artists.length-20}件...</span>` : ''}
-      </div>
-    </div>` : ''}
-
-    ${venues.length ? `
-    <div>
-      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:10px;">会場 (${venues.length})</div>
-      ${venues.slice(0,10).map(v => {
-        const cnt = all.filter(e=>e.venue===v).length;
-        return `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;">
-          <span style="color:var(--text2);">${esc(v)}</span>
-          <span style="font-weight:500;">${cnt}回</span>
-        </div>`;
-      }).join('')}
-    </div>` : ''}
-  `;
-  document.getElementById('datainfo-sheet').style.display = 'flex';
-}
-
-function closeDataInfoSheet() {
-  document.getElementById('datainfo-sheet').style.display = 'none';
-}
-
-// ---- 全データ削除 ----
-async function confirmDeleteAll() {
-  const all = await dbAll();
-  if (all.length === 0) { showToast('削除するデータがありません'); return; }
-  if (!confirm(`⚠️ 全${all.length}件のデータを削除します。
-
-先にバックアップを作成することを強くおすすめします。
-
-本当に削除しますか？`)) return;
-  if (!confirm('最終確認: この操作は取り消せません。削除しますか？')) return;
-  for (const e of all) await dbDelete(e.id);
-  entries = [];
-  renderList(); renderTimeline(); renderStats(); renderFilterChips(); refreshSettingsLabels();
-  showToast('🗑 全データを削除しました');
-}
-
-// ---- 旧APIとの後方互換（他の箇所から呼ばれる場合の保険） ----
-async function exportData() { await openExportSheet(); }
-async function importData(event) { await handleImportFile(event); }
-
-// ===== UTILS =====
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function fmtDate(d) {
-  if (!d) return '';
-  const [y,m,day] = d.split('-');
-  if (!y) return d;
-  const weekdays = ['日','月','火','水','木','金','土'];
-  const dt = new Date(d);
-  const w = weekdays[dt.getDay()];
-  return `${y}年${parseInt(m)}月${parseInt(day)}日(${w})`;
-}
-
-let toastTimer;
-// ===== SERVICE WORKER =====
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').then(reg => {
-      // 新バージョン検知時に即座に更新を適用
-      reg.addEventListener('updatefound', () => {
-        const newWorker = reg.installing;
-        if (!newWorker) return;
-        newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // 新しいSWがインストール完了 → 即座にスキップ待ち
-            newWorker.postMessage({ type: 'SKIP_WAITING' });
-            console.log('[SW] new version detected, updating...');
-          }
-        });
-      });
-    }).catch(err => console.warn('[SW] register failed:', err));
-
-    // SWが切り替わったらページをリロードして最新版を適用
-    let refreshing = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        console.log('[SW] controller changed, reloading for latest version');
-        window.location.reload();
-      }
-    });
-  });
-}
-
-function showToast(msg) {
-  clearTimeout(toastTimer);
-  let t = document.querySelector('.toast');
-  if (t) t.remove();
-  t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  toastTimer = setTimeout(()=>t.remove(), 2500);
-}
-</script>
-</body>
-</html>
