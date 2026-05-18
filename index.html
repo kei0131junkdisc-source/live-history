@@ -65,7 +65,7 @@
 
   /* LIST VIEW */
   .list-container { padding: 12px 14px; }
-  .live-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); display: flex; gap: 12px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s; active: background(var(--bg3)); }
+  .live-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); display: flex; gap: 12px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s;}
   .live-item:active { background: var(--bg3); border-color: var(--border2); }
   .live-thumb { width: 72px; height: 72px; border-radius: var(--radius-sm); object-fit: cover; background: var(--bg3); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
   .live-thumb-placeholder { color: var(--text3); font-size: 28px; }
@@ -711,8 +711,7 @@ function renderList() {
       empty.querySelector('.empty-sub').textContent = `「${activeFilter}」のライブ記録が見つかりません`;
     } else {
       empty.querySelector('.empty-title').textContent = '記録がまだありません';
-      empty.querySelector('.empty-sub').textContent = '右下の＋ボタンから
-ライブ参戦を記録しましょう';
+      empty.querySelector('.empty-sub').textContent = '右下の＋ボタンからライブ参戦を記録しましょう';
     }
     return;
   }
