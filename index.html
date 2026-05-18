@@ -65,7 +65,7 @@
 
   /* LIST VIEW */
   .list-container { padding: 12px 14px; }
-  .live-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); display: flex; gap: 12px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s;}
+  .live-item { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius); display: flex; gap: 12px; padding: 12px; margin-bottom: 10px; cursor: pointer; transition: border-color 0.2s, background 0.2s; active: background(var(--bg3)); }
   .live-item:active { background: var(--bg3); border-color: var(--border2); }
   .live-thumb { width: 72px; height: 72px; border-radius: var(--radius-sm); object-fit: cover; background: var(--bg3); flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
   .live-thumb-placeholder { color: var(--text3); font-size: 28px; }
@@ -99,7 +99,7 @@
   /* IMAGE UPLOAD */
   .img-upload-area {
     border: 2px dashed var(--border2); border-radius: var(--radius); padding: 24px;
-    text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative;overflow: hidden;
+    text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative;
   }
   .img-upload-area:active { background: var(--bg3); }
   .img-upload-area.has-image { border-style: solid; border-color: var(--accent3); padding: 0; }
@@ -196,6 +196,23 @@
 
   /* FAB */
   .fab { position: fixed; bottom: calc(70px + var(--safe-bottom)); right: 16px; width: 54px; height: 54px; background: linear-gradient(135deg, var(--accent3), var(--accent2)); border: none; border-radius: 50%; color: #fff; font-size: 26px; cursor: pointer; z-index: 50; box-shadow: 0 4px 20px rgba(192,132,252,0.4); display: flex; align-items: center; justify-content: center; }
+
+  /* TAG AUTOCOMPLETE */
+  .tag-autocomplete {
+    position: absolute; left: 0; right: 0;
+    background: var(--bg3); border: 1px solid var(--border2);
+    border-radius: var(--radius-sm); z-index: 500;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    overflow: hidden; max-height: 200px; overflow-y: auto;
+  }
+  .tag-ac-item {
+    padding: 11px 14px; font-size: 14px; cursor: pointer;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border); transition: background 0.1s;
+  }
+  .tag-ac-item:last-child { border-bottom: none; }
+  .tag-ac-item:active { background: var(--bg4); }
+  .tag-ac-match { color: var(--accent); font-weight: 700; }
 
   /* SCROLLBAR */
   ::-webkit-scrollbar { width: 3px; height: 3px; }
@@ -382,7 +399,7 @@
       <div class="form-group">
         <label>写真</label>
         <div class="img-upload-area" id="upload-area">
-        <input type="file" accept="image/*" id="img-input" onchange="handleImageSelect(event)">
+          <input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)">
           <div class="upload-icon">📷</div>
           <div class="upload-text">タップして撮影・選択</div>
           <div class="upload-sub">撮影するとOCRで自動入力を試みます</div>
@@ -405,8 +422,16 @@
       </div>
       <div class="form-group">
         <label>アーティスト</label>
-        <div class="tags-input-wrap" id="tags-wrap">
-          <input type="text" id="tags-input" placeholder="名前を入力 → Enter or カンマ区切りで複数入力" onkeydown="handleTagInput(event)" onpaste="handleTagPaste(event)">
+        <div style="position:relative;">
+          <div class="tags-input-wrap" id="tags-wrap">
+            <input type="text" id="tags-input"
+              placeholder="名前を入力 → Enter or カンマ区切りで複数入力"
+              onkeydown="handleTagInput(event)"
+              oninput="handleTagAutocomplete()"
+              onpaste="handleTagPaste(event)"
+              autocomplete="off">
+          </div>
+          <div id="tag-autocomplete" class="tag-autocomplete" style="display:none;"></div>
         </div>
         <div style="font-size:11px;color:var(--text3);margin-top:5px;">例: YOASOBI, Ado, 米津玄師 ／ Enter・カンマ・読点で確定</div>
         <div id="tag-suggestions" style="margin-top:8px;display:flex;flex-wrap:wrap;gap:5px;"></div>
@@ -429,8 +454,9 @@
     <div class="sheet-handle"></div>
     <div class="sheet-header">
       <span>詳細</span>
-      <div style="display:flex; gap:8px;">
+      <div style="display:flex; gap:8px; align-items:center;">
         <button class="btn btn-secondary btn-sm" onclick="editCurrentDetail()" style="padding:6px 12px; font-size:12px;">✏️ 編集</button>
+        <button class="btn btn-sm" onclick="deleteFromDetail()" style="padding:6px 12px; font-size:12px; background:rgba(248,113,113,0.15); border:1px solid rgba(248,113,113,0.35); color:var(--danger); width:auto; border-radius:var(--radius-sm);">🗑 削除</button>
         <button class="close-btn" onclick="closeDetailSheet()">✕</button>
       </div>
     </div>
@@ -649,7 +675,7 @@ openDB().then(async () => {
   // DOMContentLoaded後に設定する）
   requestAnimationFrame(() => {
     const badge = document.getElementById('version-badge');
-    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.2');
+    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.4');
     refreshSettingsLabels();
   });
 }).catch(e => console.error('[init]', e));
@@ -674,7 +700,6 @@ function switchTab(tab) {
 
 // ===== RENDER LIST =====
 function renderList() {
-  console.log('[renderList] activeFilter:', activeFilter);
   const q = searchQuery.toLowerCase().trim();
   let filtered = entries.filter(e => {
     if (q) {
@@ -696,31 +721,21 @@ function renderList() {
   const container = document.getElementById('list-container');
   const empty = document.getElementById('empty-state');
 
- if (filtered.length === 0) {
-  container.innerHTML = '';
-
-  if (empty) {
+  if (filtered.length === 0) {
+    container.innerHTML = '';
+    container.appendChild(empty);
     empty.style.display = '';
-
     if (activeFilter !== 'all') {
-      empty.querySelector('.empty-title').textContent =
-        '該当する記録がありません';
-
-      empty.querySelector('.empty-sub').textContent =
-        `「${activeFilter}」のライブ記録が見つかりません`;
-
+      empty.querySelector('.empty-title').textContent = '該当する記録がありません';
+      empty.querySelector('.empty-sub').textContent = `「${activeFilter}」のライブ記録が見つかりません`;
     } else {
-      empty.querySelector('.empty-title').textContent =
-        '記録がまだありません';
-
-      empty.querySelector('.empty-sub').textContent =
-        '右下の＋ボタンからライブ参戦を記録しましょう';
+      empty.querySelector('.empty-title').textContent = '記録がまだありません';
+      empty.querySelector('.empty-sub').textContent = '右下の＋ボタンから
+ライブ参戦を記録しましょう';
     }
+    return;
   }
-
-  return;
-}
-  if (empty) empty.style.display = 'none';
+  empty.style.display = 'none';
   container.innerHTML = filtered.map(e => `
     <div class="live-item" onclick="openDetail('${e.id}')">
       <div class="live-thumb">
@@ -734,7 +749,7 @@ function renderList() {
         </div>
         <div class="tags-row">${(e.tags||[]).map(t => {
           const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase();
-          return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="handleTagClick(event,this)">' + esc(t) + '</span>';
+          return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="event.stopPropagation();handleTagFilter(this)">' + esc(t) + '</span>';
         }).join('')}</div>
       </div>
     </div>
@@ -777,20 +792,10 @@ function handleTagFilter(el) {
   const tag = el && el.dataset && el.dataset.tag;
   if (tag) setFilter(tag);
 }
-function handleTagClick(event, el) {
-  event.stopPropagation();
-  handleTagFilter(el);
-}
 
 function setFilter(f) {
-  console.log('[setFilter] before:', activeFilter);
-  console.log('[setFilter] new:', f);
-
+  console.log('[setFilter] activeFilter:', f);
   activeFilter = f;
-
-  console.log('[setFilter] after:', activeFilter);
-  console.log('[setFilter] entries:', entries);
-
   renderFilterChips();
   renderList();
 }
@@ -821,9 +826,10 @@ function renderTimeline() {
   Object.keys(byYear).sort((a,b)=>b-a).forEach(y => {
     const total = Object.values(byYear[y]).reduce((s,arr)=>s+arr.length,0);
     html += `<div class="year-group"><div class="year-header">${y}年 <span class="year-count">${total}公演</span></div>`;
-    Object.keys(byYear[y]).sort((a,b)=>b-a).forEach(m => {
+    Object.keys(byYear[y]).sort((a,b)=>a-b).forEach(m => {  // 月は昇順
       html += `<div class="month-header">${MONTHS[parseInt(m)-1]||m}</div>`;
-      byYear[y][m].forEach(e => {
+      // 月内のアイテムも日付昇順で表示
+      byYear[y][m].sort((a,b) => (a.date||) > (b.date||) ? 1 : -1).forEach(e => {
         html += `<div class="timeline-item" onclick="openDetail('${e.id}')">
           <div class="timeline-thumb">${e.imageData ? `<img src="${e.imageData}" style="width:52px;height:52px;border-radius:8px;object-fit:cover">` : '🎵'}</div>
           <div class="timeline-info">
@@ -879,6 +885,24 @@ function closeDetailSheet() { document.getElementById('detail-sheet').style.disp
 function closeDetailOutside(e) { if (e.target.id==='detail-sheet') closeDetailSheet(); }
 function editCurrentDetail() { closeDetailSheet(); openAddSheet(currentDetailId); }
 
+async function deleteFromDetail() {
+  if (!currentDetailId) return;
+  const entry = entries.find(e => e.id === currentDetailId);
+  const label = entry ? (entry.event || fmtDate(entry.date) || 'この記録') : 'この記録';
+  if (!confirm(`「${label}」を削除しますか？
+この操作は取り消せません。`)) return;
+  try {
+    await dbDelete(currentDetailId);
+    entries = await dbAll();
+    renderList(); renderTimeline(); renderStats(); renderFilterChips();
+    closeDetailSheet();
+    showToast('🗑 削除しました');
+  } catch(err) {
+    console.error('[deleteFromDetail]', err);
+    showToast('削除に失敗しました');
+  }
+}
+
 // ===== ADD/EDIT SHEET =====
 function openAddSheet(editId=null) {
   currentEditId = editId;
@@ -898,7 +922,7 @@ function openAddSheet(editId=null) {
       if (e.imageData) {
         const area = document.getElementById('upload-area');
         area.classList.add('has-image');
-        area.innerHTML = `<img src="${e.imageData}"><input type="file" accept="image/*" id="img-input" onchange="handleImageSelect(event)">`;
+        area.innerHTML = `<img src="${e.imageData}"><input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)">`;
       }
     }
     document.getElementById('sheet-title').textContent = 'ライブを編集';
@@ -942,39 +966,23 @@ function clearForm() {
   ['f-event','f-date','f-venue','f-memo'].forEach(id => document.getElementById(id).value='');
   const area = document.getElementById('upload-area');
   area.classList.remove('has-image');
-  area.innerHTML = `<input type="file" accept="image/*" id="img-input" onchange="handleImageSelect(event)"><div class="upload-icon">📷</div><div class="upload-text">タップして撮影・選択</div><div class="upload-sub">撮影するとOCRで自動入力を試みます</div>`;
+  area.innerHTML = `<input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)"><div class="upload-icon">📷</div><div class="upload-text">タップして撮影・選択</div><div class="upload-sub">撮影するとOCRで自動入力を試みます</div>`;
   document.getElementById('ocr-result-preview').style.display = 'none';
+  hideTagAutocomplete();
 }
 
 // ===== IMAGE + OCR =====
 async function handleImageSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
-
   const reader = new FileReader();
-
   reader.onload = async e => {
     currentImageData = e.target.result;
-
     const area = document.getElementById('upload-area');
     area.classList.add('has-image');
-
-    // 既存画像を削除
-    const oldImg = area.querySelector('img');
-    if (oldImg) oldImg.remove();
-
-    // 新しい画像を追加
-    const img = document.createElement('img');
-    img.src = currentImageData;
-    img.style.maxHeight = '220px';
-
-    // inputは作り直さず既存を使う
-    const input = document.getElementById('img-input');
-    area.insertBefore(img, input);
-
+    area.innerHTML = `<img src="${currentImageData}" style="max-height:220px"><input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)">`;
     await runOCR(currentImageData);
   };
-
   reader.readAsDataURL(file);
 }
 
@@ -1098,15 +1106,30 @@ function handleTagInput(ev) {
     const parts = splitTagString(val);
     addTagsUnique(parts);
     inp.value = '';
+    hideTagAutocomplete();
     return;
   }
 
-  // Enter で確定（カンマなしの単一入力）
+  // Enter で確定（カンマなしの単一入力 / オートコンプリート無視して確定）
   if (ev.key === 'Enter') {
     ev.preventDefault();
-    const parts = splitTagString(val);
-    addTagsUnique(parts);
-    inp.value = '';
+    // オートコンプリートが表示中で先頭候補があればそれを使う
+    const ac = document.getElementById('tag-autocomplete');
+    const first = ac && ac.style.display !== 'none' && ac.querySelector('.tag-ac-item');
+    if (first) {
+      selectTagAC(ev, first);
+    } else {
+      const parts = splitTagString(val);
+      addTagsUnique(parts);
+      inp.value = '';
+      hideTagAutocomplete();
+    }
+    return;
+  }
+
+  // Escape でオートコンプリートを閉じる
+  if (ev.key === 'Escape') {
+    hideTagAutocomplete();
     return;
   }
 
@@ -1164,7 +1187,96 @@ function renderTagSuggestions() {
 
 function addTagSug(t) {
   addTagsUnique([t]);
+  // サジェストも更新
+  renderTagSuggestions();
 }
+
+// ── インライン入力オートコンプリート ──────────────────────────────
+// 入力中の文字列に前方一致・部分一致するタグを候補表示する
+function handleTagAutocomplete() {
+  const inp = document.getElementById('tags-input');
+  const ac  = document.getElementById('tag-autocomplete');
+  if (!inp || !ac) return;
+
+  // カンマで区切られた最後のトークンが入力対象
+  const raw   = inp.value;
+  const parts = raw.split(/[,，、]/);
+  const query = parts[parts.length - 1].trim().toLowerCase();
+
+  if (!query) { hideTagAutocomplete(); return; }
+
+  // 既存タグから候補を絞り込み（現在入力済みのタグは除外）
+  const currentNorm = currentTags.map(t => t.trim().toLowerCase());
+  const candidates = [...new Set(entries.flatMap(e => e.tags || []))]
+    .filter(t => {
+      const n = t.trim().toLowerCase();
+      return n.includes(query) && !currentNorm.includes(n);
+    })
+    .sort((a, b) => {
+      // 前方一致を上に
+      const an = a.trim().toLowerCase(), bn = b.trim().toLowerCase();
+      const aStarts = an.startsWith(query), bStarts = bn.startsWith(query);
+      if (aStarts && !bStarts) return -1;
+      if (!aStarts && bStarts) return  1;
+      return a.localeCompare(b, 'ja');
+    })
+    .slice(0, 8);
+
+  if (!candidates.length) { hideTagAutocomplete(); return; }
+
+  // マッチ部分をハイライト
+  ac.innerHTML = candidates.map(t => {
+    const n   = t.trim().toLowerCase();
+    const idx = n.indexOf(query);
+    let label;
+    if (idx >= 0) {
+      const before = esc(t.slice(0, idx));
+      const match  = esc(t.slice(idx, idx + query.length));
+      const after  = esc(t.slice(idx + query.length));
+      label = before + '<span class="tag-ac-match">' + match + '</span>' + after;
+    } else {
+      label = esc(t);
+    }
+    return '<div class="tag-ac-item" data-tag="' + esc(t) + '" onmousedown="selectTagAC(event,this)" ontouchend="selectTagAC(event,this)">'
+         + '<span style="font-size:14px;">🎵</span>' + label + '</div>';
+  }).join('');
+
+  ac.style.display = 'block';
+}
+
+// オートコンプリートから候補を選択
+// mousedown/touchend を使うことで input の blur より先に発火させる
+function selectTagAC(event, el) {
+  event.preventDefault(); // blur を防ぐ
+  const tag = el && el.dataset.tag;
+  if (!tag) return;
+
+  const inp = document.getElementById('tags-input');
+  // カンマ前の入力済み部分（最後のトークン以外）を保持
+  const raw   = inp.value;
+  const parts = raw.split(/[,，、]/);
+  parts[parts.length - 1] = ''; // 入力中のトークンをクリア
+  const prefix = parts.slice(0, -1).join(',');
+
+  // 先にinputをクリアしてから追加
+  inp.value = prefix ? prefix + ',' : '';
+  addTagsUnique([tag]);
+  inp.value = '';
+  hideTagAutocomplete();
+  inp.focus();
+}
+
+function hideTagAutocomplete() {
+  const ac = document.getElementById('tag-autocomplete');
+  if (ac) ac.style.display = 'none';
+}
+
+// フォーカスが外れたら候補を閉じる（少し遅延してクリックを優先）
+document.addEventListener('click', e => {
+  if (!e.target.closest('#tags-wrap') && !e.target.closest('#tag-autocomplete')) {
+    hideTagAutocomplete();
+  }
+});
 
 // ===== SAVE =====
 // ── iOS Safari PWA 対応メモ ──────────────────────────────────────────
@@ -1371,7 +1483,7 @@ async function deleteCurrentEntry() {
 //   entries: [ ...全エントリ ]  imageDataはBase64
 // }
 
-const APP_VERSION = "1.3";   // ← ここだけ変えれば全体反映
+const APP_VERSION = "1.4";   // ← ここだけ変えれば全体反映
 const SCHEMA_VERSION = 2;
 const BACKUP_HISTORY_KEY = "livelog_backup_history";
 let exportIncludeImages = true;
