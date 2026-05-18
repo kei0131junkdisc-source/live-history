@@ -674,6 +674,7 @@ function switchTab(tab) {
 
 // ===== RENDER LIST =====
 function renderList() {
+  console.log('[renderList] activeFilter:', activeFilter);
   const q = searchQuery.toLowerCase().trim();
   let filtered = entries.filter(e => {
     if (q) {
@@ -771,8 +772,14 @@ function handleTagClick(event, el) {
 }
 
 function setFilter(f) {
-  console.log('[setFilter] activeFilter:', f);
+  console.log('[setFilter] before:', activeFilter);
+  console.log('[setFilter] new:', f);
+
   activeFilter = f;
+
+  console.log('[setFilter] after:', activeFilter);
+  console.log('[setFilter] entries:', entries);
+
   renderFilterChips();
   renderList();
 }
