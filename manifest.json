@@ -10,7 +10,7 @@
   "lang": "ja",
   "icons": [
     {
-      "src": "icon-512.png",
+      "src": "icon-500.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
