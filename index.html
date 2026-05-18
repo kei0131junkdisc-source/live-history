@@ -950,14 +950,31 @@ function clearForm() {
 async function handleImageSelect(event) {
   const file = event.target.files[0];
   if (!file) return;
+
   const reader = new FileReader();
+
   reader.onload = async e => {
     currentImageData = e.target.result;
+
     const area = document.getElementById('upload-area');
     area.classList.add('has-image');
-    area.innerHTML = `<img src="${currentImageData}" style="max-height:220px"><input type="file" accept="image/*" capture="environment" id="img-input" onchange="handleImageSelect(event)">`;
+
+    // 既存画像を削除
+    const oldImg = area.querySelector('img');
+    if (oldImg) oldImg.remove();
+
+    // 新しい画像を追加
+    const img = document.createElement('img');
+    img.src = currentImageData;
+    img.style.maxHeight = '220px';
+
+    // inputは作り直さず既存を使う
+    const input = document.getElementById('img-input');
+    area.insertBefore(img, input);
+
     await runOCR(currentImageData);
   };
+
   reader.readAsDataURL(file);
 }
 
