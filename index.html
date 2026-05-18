@@ -201,19 +201,6 @@
   ::-webkit-scrollbar { width: 3px; height: 3px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-  #app-version {
-  position: fixed;
-  top: 10px;
-  right: 10px;
-  background: rgba(255,255,255,0.1);
-  color: white;
-  padding: 4px 8px;
-  border-radius: 999px;
-  font-size: 12px;
-  z-index: 9999;
-  backdrop-filter: blur(8px);
-}
 </style>
 </head>
 <body>
@@ -617,19 +604,25 @@ function dbAll() {
 
 function dbPut(entry) {
   return new Promise((res, rej) => {
-    const tx = db.transaction(STORE, 'readwrite');
+    const tx  = db.transaction(STORE, 'readwrite');
     const req = tx.objectStore(STORE).put(entry);
-    req.onsuccess = () => res();
-    req.onerror = e => rej(e.target.error);
+    // Safari: req.onsuccess はトランザクションコミット前に発火することがある
+    // tx.oncomplete で resolve することでDBへの確実な書き込みを保証する
+    tx.oncomplete = () => res();
+    tx.onerror    = e  => rej(e.target.error);
+    tx.onabort    = e  => rej(e.target.error);
+    req.onerror   = e  => rej(e.target.error);
   });
 }
 
 function dbDelete(id) {
   return new Promise((res, rej) => {
-    const tx = db.transaction(STORE, 'readwrite');
+    const tx  = db.transaction(STORE, 'readwrite');
     const req = tx.objectStore(STORE).delete(id);
-    req.onsuccess = () => res();
-    req.onerror = e => rej(e.target.error);
+    tx.oncomplete = () => res();
+    tx.onerror    = e  => rej(e.target.error);
+    tx.onabort    = e  => rej(e.target.error);
+    req.onerror   = e  => rej(e.target.error);
   });
 }
 
@@ -729,7 +722,7 @@ function renderList() {
         </div>
         <div class="tags-row">${(e.tags||[]).map(t => {
           const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase();
-          return `<span class="tag tag-clickable${isActive?' tag-active':''}" onclick="event.stopPropagation();setFilter('${esc(t)}')">${esc(t)}</span>`;
+          return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="event.stopPropagation();handleTagFilter(this)">' + esc(t) + '</span>';
         }).join('')}</div>
       </div>
     </div>
@@ -755,7 +748,7 @@ function renderFilterChips() {
   const chips = document.getElementById('filter-chips');
   const filterNorm = activeFilter.trim().toLowerCase();
 
-  chips.innerHTML = `<div class="chip${activeFilter==='all'?' active':''}" onclick="setFilter('all')">すべて</div>`;
+  chips.innerHTML = '<div class="chip' + (activeFilter==='all'?' active':'') + '" onclick="setFilter(\'all\')">すべて</div>';
   allTags.forEach(t => {
     const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === filterNorm;
     const d = document.createElement('div');
@@ -766,7 +759,15 @@ function renderFilterChips() {
   });
 }
 
+// タグ要素のdata-tag属性からフィルタを実行するハンドラ
+// inline onclick内でesc()を通したURLエンコードを避けるために使用
+function handleTagFilter(el) {
+  const tag = el && el.dataset && el.dataset.tag;
+  if (tag) setFilter(tag);
+}
+
 function setFilter(f) {
+  console.log('[setFilter] activeFilter:', f);
   activeFilter = f;
   renderFilterChips();
   renderList();
@@ -844,7 +845,7 @@ function openDetail(id) {
       <div class="detail-event">${esc(e.event||'（タイトルなし）')}</div>
       ${e.date?`<div class="detail-field"><span class="detail-field-icon">📅</span><span class="detail-field-val">${fmtDate(e.date)}</span></div>`:''}
       ${e.venue?`<div class="detail-field"><span class="detail-field-icon">📍</span><span class="detail-field-val">${esc(e.venue)}</span></div>`:''}
-      ${(e.tags&&e.tags.length)?`<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">${e.tags.map(t=>`<span class="tag tag-clickable" onclick="closeDetailSheet();setFilter('${esc(t)}');switchTab('list')">${esc(t)}</span>`).join('')}</div></div></div>`:''}
+      ${(e.tags&&e.tags.length)?'<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">' + e.tags.map(t=>'<span class="tag tag-clickable" data-tag="'+esc(t)+'" onclick="closeDetailSheet();handleTagFilter(this);switchTab(\'list\')">' + esc(t) + '</span>').join('') + '</div></div></div>':''}
       ${e.memo?`<div class="section-label">メモ</div><div style="font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${esc(e.memo)}</div>`:''}
       ${e.ocrText?`<div class="section-label">OCR全文</div><div class="ocr-result-box">${esc(e.ocrText)}</div>`:''}
     </div>
@@ -1118,7 +1119,7 @@ function renderTagSuggestions() {
   if (!allTags.length) { sug.style.display = 'none'; return; }
   sug.style.display = 'flex';
   sug.innerHTML = allTags.slice(0, 10).map(t =>
-    `<span class="tag tag-clickable" onclick="addTagSug('${esc(t)}')">${esc(t)}</span>`
+    '<span class="tag tag-clickable" data-tag="' + esc(t) + '" onclick="addTagSug(this.dataset.tag)">' + esc(t) + '</span>'
   ).join('');
 }
 
@@ -1224,43 +1225,52 @@ async function saveEntry() {
 
     console.log('[saveEntry] saving id=', entry.id, 'isEdit=', isEdit);
 
-    // ── STEP 6: IndexedDB へ確実に書き込み ────────────────────────────
+    // ── STEP 6: IndexedDB へ書き込み（完了まで待機）─────────────────
     await dbPut(entry);
     console.log('[saveEntry] save completed ✅');
 
-    // ── STEP 7: グローバル state をDBから完全再取得 ────────────────────
+    // ── STEP 7: DB から state を完全再取得（スナップショットを捨てて再読込）─
     entries = await dbAll();
     console.log('[saveEntry] state refreshed, total=', entries.length);
 
-    // ── STEP 8: OCRキャッシュをクリア ─────────────────────────────────
+    // ── STEP 8: OCRキャッシュをクリア ──────────────────────────────
     window._ocrFullText = '';
 
-    // ── STEP 9: フラグとボタンを先に戻す ──────────────────────────────
-    //    (closeAddSheet内で_resetSaveBtn が呼ばれるが、念のため先行リセット)
-    _resetSaveBtn();
-
-    // ── STEP 10: モーダルを閉じる（iOS Safari 対策: class + style 両方）──
-    const sheet = document.getElementById('add-sheet');
-    if (sheet) {
-      sheet.style.display = 'none';        // style直書き
-      sheet.classList.add('hidden');       // classも付与（バックアップ）
-    }
-    console.log('[saveEntry] modal closed ✅');
-
-    // 1フレーム空けてDOM確定を待つ（iOS Safari 対策）
-    await waitFrame();
-
-    // ── STEP 11: UI一括更新 ────────────────────────────────────────────
+    // ── STEP 9: UI全体を更新（entries更新直後・モーダルclose前に実行）─
+    //    ここで renderList() を先に呼ぶことで、iOS PWA でも
+    //    モーダルclose後に最新データが一覧に表示される
     renderList();
     renderTimeline();
     renderStats();
     renderFilterChips();
     console.log('[saveEntry] list refreshed ✅');
 
-    // ── STEP 12: リスト画面へ強制遷移 ─────────────────────────────────
-    if (currentTab !== 'list') switchTab('list');
+    // ── STEP 10: フラグとボタンをリセット ──────────────────────────
+    _resetSaveBtn();
+    // currentEditId をここでリセット（_resetSaveBtnの後）
+    currentEditId = null;
 
-    // ── STEP 13: 成功トースト ──────────────────────────────────────────
+    // ── STEP 11: モーダルを閉じる（iOS Safari: style + class 両方）──
+    const sheet = document.getElementById('add-sheet');
+    if (sheet) {
+      sheet.style.display = 'none';
+      sheet.classList.add('hidden');
+    }
+    console.log('[saveEntry] modal closed ✅');
+
+    // ── STEP 12: リスト画面へ強制遷移 ──────────────────────────────
+    //    すでにlistタブでも再遷移してタブ表示を確定させる
+    currentTab = 'list';
+    ['list','timeline','settings'].forEach(t => {
+      const page = document.getElementById('page-' + t);
+      const nav  = document.getElementById('nav-'  + t);
+      if (page) page.classList.toggle('active', t === 'list');
+      if (nav)  nav.classList.toggle('active',  t === 'list');
+    });
+    const fab = document.getElementById('fab-btn');
+    if (fab) fab.style.display = 'flex';
+
+    // ── STEP 13: 成功トースト ───────────────────────────────────────
     showToast(isEdit ? '✅ ライブを更新しました' : '✅ ライブを保存しました');
 
   } catch (err) {
@@ -1877,6 +1887,5 @@ function showToast(msg) {
   toastTimer = setTimeout(()=>t.remove(), 2500);
 }
 </script>
-<div id="app-version">v1.2</div>
 </body>
 </html>
