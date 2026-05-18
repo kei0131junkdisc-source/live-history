@@ -1616,7 +1616,7 @@ function resetImportStep() {
   document.getElementById('import-file').value = '';
   pendingImportData = null;
   const radios = document.querySelectorAll('input[name="import-mode"]');
-  radius.forEach(r => r.checked = r.value === 'merge');
+  radios.forEach(r => r.checked = r.value === 'merge');
   document.getElementById('overwrite-warning').style.display = 'none';
 }
 
