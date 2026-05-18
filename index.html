@@ -722,7 +722,7 @@ function renderList() {
         </div>
         <div class="tags-row">${(e.tags||[]).map(t => {
           const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase();
-          return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="event.stopPropagation();handleTagFilter(this)">' + esc(t) + '</span>';
+          return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="handleTagClick(event,this)">' + esc(t) + '</span>';
         }).join('')}</div>
       </div>
     </div>
@@ -764,6 +764,10 @@ function renderFilterChips() {
 function handleTagFilter(el) {
   const tag = el && el.dataset && el.dataset.tag;
   if (tag) setFilter(tag);
+}
+function handleTagClick(event, el) {
+  event.stopPropagation();
+  handleTagFilter(el);
 }
 
 function setFilter(f) {
