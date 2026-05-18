@@ -667,7 +667,7 @@ openDB().then(async () => {
   setToday();
   requestAnimationFrame(() => {
     const badge = document.getElementById('version-badge');
-    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.5');
+    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '1.6');
     refreshSettingsLabels();
   });
 }).catch(e => console.error('[init]', e));
@@ -1380,7 +1380,7 @@ async function deleteCurrentEntry() {
 }
 
 // ===== BACKUP SYSTEM =====
-const APP_VERSION = "1.5";
+const APP_VERSION = "1.6";
 const SCHEMA_VERSION = 2;
 const BACKUP_HISTORY_KEY = "livelog_backup_history";
 let exportIncludeImages = true;
