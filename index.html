@@ -748,7 +748,7 @@ function renderList() {
         </div>
         <div class="tags-row">${(e.tags||[]).map(t => {
           const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase();
-          return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="event.stopPropagation();handleTagFilter(this)">' + esc(t) + '</span>';
+          return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + encodeURIComponent(t) + '" onclick="event.stopPropagation();handleTagFilter(this)">' + esc(t) + '</span>';
         }).join('')}</div>
       </div>
     </div>
@@ -788,7 +788,9 @@ function renderFilterChips() {
 // タグ要素のdata-tag属性からフィルタを実行するハンドラ
 // inline onclick内でesc()を通したURLエンコードを避けるために使用
 function handleTagFilter(el) {
-  const tag = el && el.dataset && el.dataset.tag;
+  if (!el || !el.dataset || !el.dataset.tag) return;
+  // data-tag は encodeURIComponent で格納されているのでデコードしてから使う
+  const tag = decodeURIComponent(el.dataset.tag);
   if (tag) setFilter(tag);
 }
 
@@ -872,7 +874,7 @@ function openDetail(id) {
       <div class="detail-event">${esc(e.event||'（タイトルなし）')}</div>
       ${e.date?`<div class="detail-field"><span class="detail-field-icon">📅</span><span class="detail-field-val">${fmtDate(e.date)}</span></div>`:''}
       ${e.venue?`<div class="detail-field"><span class="detail-field-icon">📍</span><span class="detail-field-val">${esc(e.venue)}</span></div>`:''}
-      ${(e.tags&&e.tags.length)?'<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">' + e.tags.map(t=>'<span class="tag tag-clickable" data-tag="'+esc(t)+'" onclick="closeDetailSheet();handleTagFilter(this);switchTab(\'list\')">' + esc(t) + '</span>').join('') + '</div></div></div>':''}
+      ${(e.tags&&e.tags.length)?'<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">' + e.tags.map(t=>'<span class="tag tag-clickable" data-tag="'+encodeURIComponent(t)+'" onclick="closeDetailSheet();handleTagFilter(this);switchTab(\'list\')">' + esc(t) + '</span>').join('') + '</div></div></div>':''}
       ${e.memo?`<div class="section-label">メモ</div><div style="font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${esc(e.memo)}</div>`:''}
       ${e.ocrText?`<div class="section-label">OCR全文</div><div class="ocr-result-box">${esc(e.ocrText)}</div>`:''}
     </div>
@@ -1180,7 +1182,7 @@ function renderTagSuggestions() {
   if (!allTags.length) { sug.style.display = 'none'; return; }
   sug.style.display = 'flex';
   sug.innerHTML = allTags.slice(0, 10).map(t =>
-    '<span class="tag tag-clickable" data-tag="' + esc(t) + '" onclick="addTagSug(this.dataset.tag)">' + esc(t) + '</span>'
+    '<span class="tag tag-clickable" data-tag="' + encodeURIComponent(t) + '" onclick="addTagSug(decodeURIComponent(this.dataset.tag))">' + esc(t) + '</span>'
   ).join('');
 }
 
@@ -1997,31 +1999,44 @@ function fmtDate(d) {
 
 let toastTimer;
 // ===== SERVICE WORKER =====
+// iOS PWA でアプリキルだけで更新されるようにするポイント:
+//  1. SW登録時に reg.update() で毎回最新 SW をチェック
+//  2. 新 SW インストール完了で即 skipWaiting メッセージ送信
+//  3. controllerchange で location.reload() → SW が Network First で
+//     index.html を取得するので確実に最新版が読まれる
+//  4. SW 側: index.html は常にネットワークから取得 (sw.js参照)
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').then(reg => {
-      // 新バージョン検知時に即座に更新を適用
+      // ── 毎回起動時に更新チェックを強制 ──────────────────────────
+      // これにより、アプリキルして再起動するだけで新 SW が検知される
+      reg.update().catch(() => {});
+
+      // ── 新 SW がインストールされたら即座に skipWaiting ────────
       reg.addEventListener('updatefound', () => {
         const newWorker = reg.installing;
         if (!newWorker) return;
+        console.log('[SW] update found, installing...');
         newWorker.addEventListener('statechange', () => {
-          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // 新しいSWがインストール完了 → 即座にスキップ待ち
+          console.log('[SW] worker state:', newWorker.state);
+          if (newWorker.state === 'installed') {
+            // waiting または installed の時点で即 skipWaiting
+            // (controller の有無に関わらず送信 — 初回インストール含む)
             newWorker.postMessage({ type: 'SKIP_WAITING' });
-            console.log('[SW] new version detected, updating...');
+            console.log('[SW] skipWaiting sent');
           }
         });
       });
     }).catch(err => console.warn('[SW] register failed:', err));
 
-    // SWが切り替わったらページをリロードして最新版を適用
+    // ── SW が切り替わったらリロード ───────────────────────────────
+    // SW 側が index.html を Network First で返すので必ず最新版になる
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (!refreshing) {
-        refreshing = true;
-        console.log('[SW] controller changed, reloading for latest version');
-        window.location.reload();
-      }
+      if (refreshing) return;
+      refreshing = true;
+      console.log('[SW] controller changed → reload for latest version');
+      window.location.reload();
     });
   });
 }
