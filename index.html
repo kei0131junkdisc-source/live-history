@@ -696,20 +696,31 @@ function renderList() {
   const container = document.getElementById('list-container');
   const empty = document.getElementById('empty-state');
 
-  if (filtered.length === 0) {
-    container.innerHTML = '';
-    container.appendChild(empty);
+ if (filtered.length === 0) {
+  container.innerHTML = '';
+
+  if (empty) {
     empty.style.display = '';
+
     if (activeFilter !== 'all') {
-      empty.querySelector('.empty-title').textContent = '該当する記録がありません';
-      empty.querySelector('.empty-sub').textContent = `「${activeFilter}」のライブ記録が見つかりません`;
+      empty.querySelector('.empty-title').textContent =
+        '該当する記録がありません';
+
+      empty.querySelector('.empty-sub').textContent =
+        `「${activeFilter}」のライブ記録が見つかりません`;
+
     } else {
-      empty.querySelector('.empty-title').textContent = '記録がまだありません';
-      empty.querySelector('.empty-sub').textContent = '右下の＋ボタンからライブ参戦を記録しましょう';
+      empty.querySelector('.empty-title').textContent =
+        '記録がまだありません';
+
+      empty.querySelector('.empty-sub').textContent =
+        '右下の＋ボタンからライブ参戦を記録しましょう';
     }
-    return;
   }
-  empty.style.display = 'none';
+
+  return;
+}
+  if (empty) empty.style.display = 'none';
   container.innerHTML = filtered.map(e => `
     <div class="live-item" onclick="openDetail('${e.id}')">
       <div class="live-thumb">
