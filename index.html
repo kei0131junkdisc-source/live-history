@@ -730,8 +730,7 @@ function renderList() {
       empty.querySelector('.empty-sub').textContent = `「${activeFilter}」のライブ記録が見つかりません`;
     } else {
       empty.querySelector('.empty-title').textContent = '記録がまだありません';
-      empty.querySelector('.empty-sub').textContent = '右下の＋ボタンから
-ライブ参戦を記録しましょう';
+      empty.querySelector('.empty-sub').textContent = '右下の＋ボタンからライブ参戦を記録しましょう';
     }
     return;
   }
@@ -829,7 +828,7 @@ function renderTimeline() {
     Object.keys(byYear[y]).sort((a,b)=>a-b).forEach(m => {  // 月は昇順
       html += `<div class="month-header">${MONTHS[parseInt(m)-1]||m}</div>`;
       // 月内のアイテムも日付昇順で表示
-      byYear[y][m].sort((a,b) => (a.date||) > (b.date||) ? 1 : -1).forEach(e => {
+      byYear[y][m].sort((a,b) => (a.date||'') > (b.date||'') ? 1 : -1).forEach(e => {
         html += `<div class="timeline-item" onclick="openDetail('${e.id}')">
           <div class="timeline-thumb">${e.imageData ? `<img src="${e.imageData}" style="width:52px;height:52px;border-radius:8px;object-fit:cover">` : '🎵'}</div>
           <div class="timeline-info">
