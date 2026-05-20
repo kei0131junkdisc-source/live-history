@@ -1020,7 +1020,8 @@ async function runOCR(imageData) {
     if (!window.Tesseract) {
       await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
     }
-    document.getElementById('ocr-status').textContent = 'OCR処理中... (日本語)';
+    // 日本語と英語のハイブリッドモードに戻します
+    document.getElementById('ocr-status').textContent = 'OCR処理中... (日本語+英語)';
 
     const result = await Tesseract.recognize(imageData, 'jpn+eng', {
       logger: m => {
@@ -1031,63 +1032,34 @@ async function runOCR(imageData) {
     });
 
     const text = result.data.text;
-    parseOCRText(text);
-    document.getElementById('ocr-result-preview').style.display = 'block';
     window._ocrFullText = text;
+
+    // ── ここから新しい箇条書き表示ロジック ──
+    const listEl = document.getElementById('ocr-lines-list');
+    const previewEl = document.getElementById('ocr-result-preview');
+    
+    if (listEl && previewEl) {
+      // 改行で区切って、前後の空白を消し、空行や怪しい1文字記号（. や - など）を除外
+      const lines = text.split('\n')
+        .map(l => l.trim())
+        .filter(l => l.length > 1); // 2文字以上
+
+      if (lines.length > 0) {
+        // 各行の頭に「・」をつけて箇条書きのテキストを作る
+        listEl.textContent = lines.map(l => `・ ${l}`).join('\n');
+        previewEl.style.display = 'block';
+        showToast(`🔍 ${lines.length} 行の文字を読み取りました`);
+      } else {
+        listEl.textContent = '文字が検出されませんでした。';
+        previewEl.style.display = 'block';
+      }
+    }
+
   } catch(err) {
     console.error('OCR error:', err);
     showToast('OCR失敗 — 手動で入力してください');
   } finally {
     overlay.style.display = 'none';
-  }
-}
-
-function parseOCRText(text) {
-  const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
-
-  const datePatterns = [
-    /(\d{4})[年\/\.\-](\d{1,2})[月\/\.\-](\d{1,2})/,
-    /(\d{1,2})[\/\.](\d{1,2})\s*[（(].[）)]/,
-  ];
-  let foundDate = null;
-  for (const line of lines) {
-    for (const pat of datePatterns) {
-      const m = line.match(pat);
-      if (m && !foundDate) {
-        if (m[1] && parseInt(m[1])>1990) {
-          const y=m[1], mo=m[2].padStart(2,'0'), d=m[3].padStart(2,'0');
-          foundDate = `${y}-${mo}-${d}`;
-        }
-      }
-    }
-    if (foundDate) break;
-  }
-  if (foundDate && !document.getElementById('f-date').value) {
-    document.getElementById('f-date').value = foundDate;
-  }
-
-  const venueKeywords = ['ホール','アリーナ','ドーム','スタジアム','武道館','ガーデン','ライブハウス','HALL','ARENA','DOME','STADIUM','CENTER','センター','劇場','シアター','ZEPP','Zepp'];
-  for (const line of lines) {
-    if (venueKeywords.some(k=>line.includes(k)) && line.length < 40) {
-      if (!document.getElementById('f-venue').value) {
-        document.getElementById('f-venue').value = line;
-        break;
-      }
-    }
-  }
-
-  const tourKeywords = ['TOUR','ツアー','LIVE','ライブ','CONCERT','コンサート','フェス','FES','FESTIVAL'];
-  for (const line of lines) {
-    if (tourKeywords.some(k=>line.toUpperCase().includes(k)) && line.length < 60) {
-      if (!document.getElementById('f-event').value) {
-        document.getElementById('f-event').value = line;
-        break;
-      }
-    }
-  }
-  if (!document.getElementById('f-event').value) {
-    const candidate = lines.find(l=>l.length>4&&l.length<50);
-    if (candidate) document.getElementById('f-event').value = candidate;
   }
 }
 
