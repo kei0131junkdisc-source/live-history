@@ -97,18 +97,21 @@
   input[type=date] { color-scheme: dark; }
   textarea { resize: vertical; min-height: 80px; line-height: 1.5; }
 
-  /* IMAGE UPLOAD */
+  /* IMAGE UPLOAD & MULTI PREVIEW */
   .img-upload-area {
     border: 2px dashed var(--border2); border-radius: var(--radius); padding: 24px;
     text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative;overflow: hidden;
   }
   .img-upload-area:active { background: var(--bg3); }
-  .img-upload-area.has-image { border-style: solid; border-color: var(--accent3); padding: 0; }
-  .img-upload-area img { width: 100%; border-radius: 12px; max-height: 220px; object-fit: cover; display: block; }
   .img-upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
   .upload-icon { font-size: 36px; margin-bottom: 8px; }
   .upload-text { font-size: 14px; color: var(--text2); }
   .upload-sub { font-size: 12px; color: var(--text3); margin-top: 4px; }
+  
+  .form-image-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 10px; }
+  .form-img-box { position: relative; aspect-ratio: 1; background: var(--bg3); border-radius: var(--radius-sm); border: 1px solid var(--border); overflow: hidden; }
+  .form-img-box img { width: 100%; height: 100%; object-fit: cover; }
+  .form-img-rm { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; border: none; z-index: 10; }
 
   /* BUTTONS */
   .btn { border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; padding: 14px 20px; cursor: pointer; width: 100%; font-family: inherit; transition: opacity 0.2s, transform 0.1s; }
@@ -129,9 +132,11 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .ocr-text { color: var(--text2); font-size: 14px; }
 
-  /* DETAIL VIEW */
+  /* DETAIL VIEW (MULTI IMAGE VERTICAL PILE) */
   .detail-view { padding: 0; }
-  .detail-img { width: 100%; max-height: 280px; object-fit: cover; display: block; }
+  .detail-img { width: 100%; max-height: 280px; object-fit: cover; display: block; background: var(--bg3); }
+  .detail-sub-img-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; width: 100%; }
+  .detail-sub-img-stack img { width: 100%; max-height: 360px; object-fit: cover; display: block; border-radius: var(--radius-sm); border: 1px solid var(--border); background: var(--bg3); }
   .detail-img-placeholder { height: 200px; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 60px; }
   .detail-body { padding: 16px; }
   .detail-event { font-size: 20px; font-weight: 700; margin-bottom: 8px; letter-spacing: -0.3px; }
@@ -151,14 +156,25 @@
   .timeline-item:last-child { border-bottom: none; }
   .timeline-thumb { width: 52px; height: 52px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 22px; }
   .timeline-info { flex: 1; min-width: 0; }
-  .timeline-event { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .timeline-event { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
   .timeline-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
 
   /* SEARCH */
   .search-bar { padding: 10px 14px; background: var(--bg2); border-bottom: 1px solid var(--border); }
   .search-input-wrap { position: relative; }
   .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; }
-  .search-bar input { padding-left: 36px; padding-right: 14px; font-size: 14px; }
+  .search-bar input { padding-left: 36px; padding-right: 36px; font-size: 14px; }
+  
+  /* CLEAR BUTTON */
+  #search-clear {
+    position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+    background: var(--bg4); border: none; color: var(--text2); font-size: 11px;
+    width: 18px; height: 18px; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s, color 0.2s;
+  }
+  #search-clear:active { background: var(--border2); color: var(--text); }
+
   .filter-chips { display: flex; gap: 6px; overflow-x: auto; padding: 8px 14px 10px; -webkit-overflow-scrolling: touch; }
   .filter-chips::-webkit-scrollbar { display: none; }
   .chip { flex-shrink: 0; padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border); font-size: 12px; cursor: pointer; transition: all 0.2s; background: var(--bg2); color: var(--text2); }
@@ -190,54 +206,6 @@
   .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px; text-align: center; }
   .stat-num { font-size: 28px; font-weight: 700; color: var(--accent); }
   .stat-label { font-size: 11px; color: var(--text3); margin-top: 4px; }
-
-  /* TOAST */
-  .toast { position: fixed; bottom: calc(80px + var(--safe-bottom)); left: 50%; transform: translateX(-50%); background: var(--bg3); border: 1px solid var(--border2); color: var(--text); padding: 10px 20px; border-radius: 20px; font-size: 13px; z-index: 400; animation: toastIn 0.3s ease; white-space: nowrap; }
-  @keyframes toastIn { from { opacity: 0; transform: translateX(-50%) translateY(10px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
-
-  /* FAB */
-  .fab { position: fixed; bottom: calc(70px + var(--safe-bottom)); right: 16px; width: 54px; height: 54px; background: linear-gradient(135deg, var(--accent3), var(--accent2)); border: none; border-radius: 50%; color: #fff; font-size: 26px; cursor: pointer; z-index: 50; box-shadow: 0 4px 20px rgba(192,132,252,0.4); display: flex; align-items: center; justify-content: center; }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 3px; height: 3px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
-
-  /* 検索ボックスのコンテナを基準位置にする */
-.search-input-wrap {
-  position: relative;
-}
-
-/* 検索ボックス本体の右側にボタン分の余白を作る */
-.search-bar input {
-  padding-left: 36px;
-  padding-right: 36px; /* 14pxから36pxに変更して、✖ボタンと文字が被らないようにします */
-  font-size: 14px;
-}
-
-/* ✖ボタンのデザイン */
-#search-clear {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: var(--bg4);
-  border: none;
-  color: var(--text2);
-  font-size: 11px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: background 0.2s, color 0.2s;
-}
-#search-clear:active {
-  background: var(--border2);
-  color: var(--text);
-}
 </style>
 </head>
 <body>
@@ -407,15 +375,19 @@
     </div>
     <div class="form-container">
       <div class="form-group">
-        <label>写真</label>
+        <label>写真 (最大10枚選択可 — 1枚目のみOCR読み取り対象)</label>
         <div class="img-upload-area" id="upload-area">
-        <input type="file" accept="image/*" id="img-input" onchange="handleImageSelect(event)">
+          <input type="file" accept="image/*" id="img-input" multiple onchange="handleImageSelect(event)">
           <div class="upload-icon">📷</div>
-          <div class="upload-text">タップして撮影・選択</div>
-          <div class="upload-sub">撮影するとOCRで自動入力を試みます</div>
+          <div class="upload-text">タップして撮影・選択 (複数可)</div>
+          <div class="upload-sub">1枚目の写真から文字コピペ用の読み取りを行います</div>
         </div>
+        
+        <div class="form-image-grid" id="form-image-preview-grid"></div>
+
         <div id="ocr-result-preview" style="display:none; margin-top:8px; padding:8px 10px; background:rgba(192,132,252,0.1); border:1px solid var(--border2); border-radius:var(--radius-sm); font-size:12px; color:var(--text2);">
-          <strong style="color:var(--accent)">🔍 OCR完了</strong> — 情報を自動入力しました。確認・修正してください。
+          <strong style="color:var(--accent)">🔍 OCR読み取り結果（長押しでコピー可）</strong>
+          <div id="ocr-lines-list" style="margin-top:6px; padding:6px; background:var(--bg3); border-radius:6px; max-height:120px; overflow-y:auto; font-family:monospace; white-space:pre-wrap; user-select:text; -webkit-user-select:text; color:var(--text);"></div>
         </div>
       </div>
       <div class="form-group">
@@ -563,7 +535,7 @@
           </label>
         </div>
         <div id="overwrite-warning" style="display:none;background:rgba(248,113,113,0.08);border:1px solid rgba(248,113,113,0.3);border-radius:var(--radius-sm);padding:12px 14px;font-size:13px;color:var(--danger);line-height:1.6;">
-          ⚠️ 現在の <strong id="overwrite-current-count"></strong> 件のデータがすべて削除されます。この操作は取り消せるません。
+          ⚠️ 現在の <strong id="overwrite-current-count"></strong> 件のデータがすべて削除されます。この操作は取り消せません。
         </div>
         <div id="import-progress-wrap" style="display:none;margin-bottom:14px;">
           <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text2);margin-bottom:6px;">
@@ -652,7 +624,7 @@ let entries = [];
 let currentTags = [];
 let currentEditId = null;
 let currentDetailId = null;
-let currentImageData = null;
+let currentImages = []; // 複数画像 Base64データを格納する配列（最大10枚）
 let searchQuery = '';
 let activeFilter = 'all';
 let currentTab = 'list';
@@ -667,7 +639,7 @@ openDB().then(async () => {
   setToday();
   requestAnimationFrame(() => {
     const badge = document.getElementById('version-badge');
-    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '2.0');
+    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '2.1');
     refreshSettingsLabels();
   });
 }).catch(e => console.error('[init]', e));
@@ -692,7 +664,6 @@ function switchTab(tab) {
 
 // ===== RENDER LIST =====
 function renderList() {
-  console.log('[renderList] activeFilter:', activeFilter);
   const q = searchQuery.toLowerCase().trim();
   let filtered = entries.filter(e => {
     if (q) {
@@ -727,24 +698,28 @@ function renderList() {
     return;
   }
   if (empty) empty.style.display = 'none';
-  container.innerHTML = filtered.map(e => `
-    <div class="live-item" onclick="openDetail('${e.id}')">
-      <div class="live-thumb">
-        ${e.imageData ? `<img src="${e.imageData}" style="width:72px;height:72px;border-radius:8px;object-fit:cover">` : '<span class="live-thumb-placeholder">🎵</span>'}
-      </div>
-      <div class="live-info">
-        <div class="live-event">${esc(e.event||'（タイトルなし）')}</div>
-        <div class="live-meta">
-          <span>📅 ${fmtDate(e.date)}</span>
-          ${e.venue ? `<span>📍 ${esc(e.venue)}</span>` : ''}
+  container.innerHTML = filtered.map(e => {
+    // 1枚目の写真をリストサムネイルにする（複数枚未対応の古いデータは e.imageData を参照）
+    const thumbImg = (e.images && e.images.length > 0) ? e.images[0] : (e.imageData || null);
+    return `
+      <div class="live-item" onclick="openDetail('${e.id}')">
+        <div class="live-thumb">
+          ${thumbImg ? `<img src="${thumbImg}" style="width:72px;height:72px;border-radius:8px;object-fit:cover">` : '<span class="live-thumb-placeholder">🎵</span>'}
         </div>
-        <div class="tags-row">${(e.tags||[]).map(t => {
-          const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase();
-          return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="handleTagClick(event,this)">' + esc(t) + '</span>';
-        }).join('')}</div>
+        <div class="live-info">
+          <div class="live-event">${esc(e.event||'（タイトルなし）')}</div>
+          <div class="live-meta">
+            <span>📅 ${fmtDate(e.date)}</span>
+            ${e.venue ? `<span>📍 ${esc(e.venue)}</span>` : ''}
+          </div>
+          <div class="tags-row">${(e.tags||[]).map(t => {
+            const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase();
+            return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="handleTagClick(event,this)">' + esc(t) + '</span>';
+          }).join('')}</div>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function updateFilterBanner() {
@@ -791,29 +766,23 @@ function setFilter(f) {
   renderList();
 }
 
-// 入力時の処理を書き換え（ボタンの表示/非表示を切り替えるようにする）
 document.getElementById('search-input').addEventListener('input', e => {
   searchQuery = e.target.value;
-  
   const clearBtn = document.getElementById('search-clear');
   if (clearBtn) {
     clearBtn.style.display = searchQuery.length > 0 ? 'flex' : 'none';
   }
-  
   renderList();
 });
 
-// 新しく追加：✖ボタンを押した時に検索をクリアする関数
 function clearSearch() {
   const input = document.getElementById('search-input');
   const clearBtn = document.getElementById('search-clear');
-  
   if (input) input.value = '';
   if (clearBtn) clearBtn.style.display = 'none';
-  
-  searchQuery = ''; // 検索クエリを空にする
-  renderList();     // リストを再描画して全表示に戻す
-  if (input) input.focus(); // 消した後にすぐ再入力できるようにフォーカスを当てる
+  searchQuery = '';
+  renderList();
+  if (input) input.focus();
 }
 
 // ===== RENDER TIMELINE =====
@@ -837,14 +806,13 @@ function renderTimeline() {
   Object.keys(byYear).sort((a,b)=>b-a).forEach(y => {
     const total = Object.values(byYear[y]).reduce((s,arr)=>s+arr.length,0);
     html += `<div class="year-group"><div class="year-header">${y}年 <span class="year-count">${total}公演</span></div>`;
-    // 月別の並び順（昇順に修正するため、a-bでソート）
     Object.keys(byYear[y]).sort((a,b)=>a-b).forEach(m => {
       html += `<div class="month-header">${MONTHS[parseInt(m)-1]||m}</div>`;
-      // 月内の並び順（昇順に修正するため、a.date > b.date でソート）
       const monthSorted = [...byYear[y][m]].sort((a,b) => (a.date||'') > (b.date||'') ? 1 : -1);
       monthSorted.forEach(e => {
+        const thumbImg = (e.images && e.images.length > 0) ? e.images[0] : (e.imageData || null);
         html += `<div class="timeline-item" onclick="openDetail('${e.id}')">
-          <div class="timeline-thumb">${e.imageData ? `<img src="${e.imageData}" style="width:52px;height:52px;border-radius:8px;object-fit:cover">` : '🎵'}</div>
+          <div class="timeline-thumb">${thumbImg ? `<img src="${thumbImg}" style="width:52px;height:52px;border-radius:8px;object-fit:cover">` : '🎵'}</div>
           <div class="timeline-info">
             <div class="timeline-event">${esc(e.event||'（タイトルなし）')}</div>
             <div class="timeline-meta">${fmtDate(e.date)}${e.venue?' · '+esc(e.venue):''}</div>
@@ -880,15 +848,44 @@ function openDetail(id) {
   currentDetailId = id;
   const e = entries.find(x=>x.id===id);
   if (!e) return;
+
+  // 過去バージョン互換対応を含めた画像配列の準備
+  let imgArray = [];
+  if (e.images && e.images.length > 0) {
+    imgArray = e.images;
+  } else if (e.imageData) {
+    imgArray = [e.imageData];
+  }
+
+  // 1枚目のメイン写真（最上部の特等席用）
+  const mainImgSrc = imgArray.length > 0 ? imgArray[0] : null;
+  const mainImgHtml = mainImgSrc 
+    ? `<img class="detail-img" src="${mainImgSrc}" onclick="this.style.maxHeight=this.style.maxHeight==='none'?'280px':'none'">` 
+    : `<div class="detail-img-placeholder">🎵</div>`;
+
+  // 2枚目以降のサブ写真スタック（情報テキストの「一番下」にベタ張りする用）
+  let subImagesHtml = '';
+  if (imgArray.length > 1) {
+    const subImages = imgArray.slice(1);
+    subImagesHtml = `
+      <div class="section-label">関連写真 (${subImages.length}枚)</div>
+      <div class="detail-sub-img-stack">
+        ${subImages.map(src => `<img src="${src}" onclick="this.style.maxHeight=this.style.maxHeight==='none'?'none':'360px'">`).join('')}
+      </div>
+    `;
+  }
+
   document.getElementById('detail-content').innerHTML = `
-    ${e.imageData ? `<img class="detail-img" src="${e.imageData}" onclick="this.style.maxHeight=this.style.maxHeight==='none'?'280px':'none'">` : `<div class="detail-img-placeholder">🎵</div>`}
+    ${mainImgHtml}
     <div class="detail-body">
       <div class="detail-event">${esc(e.event||'（タイトルなし）')}</div>
       ${e.date?`<div class="detail-field"><span class="detail-field-icon">📅</span><span class="detail-field-val">${fmtDate(e.date)}</span></div>`:''}
       ${e.venue?`<div class="detail-field"><span class="detail-field-icon">📍</span><span class="detail-field-val">${esc(e.venue)}</span></div>`:''}
       ${(e.tags&&e.tags.length)?'<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">' + e.tags.map(t=>'<span class="tag tag-clickable" data-tag="'+esc(t)+'" onclick="closeDetailSheet();handleTagFilter(this);switchTab(\'list\')">' + esc(t) + '</span>').join('') + '</div></div></div>':''}
-      ${e.memo?`<div class="section-label">メモ</div><div style="font-size:14px;color:var(--text2);line-height:1.7;white-wrap:pre-wrap">${esc(e.memo)}</div>`:''}
-      ${e.ocrText?`<div class="section-label">OCR全文</div><div class="ocr-result-box">${esc(e.ocrText)}</div>`:''}
+      ${e.memo?`<div class="section-label">メモ</div><div style="font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${esc(e.memo)}</div>`:''}
+      ${e.ocrText?`<div class="section-label">OCR読み取り結果（コピペ用履歴）</div><div class="ocr-result-box">${esc(e.ocrText)}</div>`:''}
+      
+      ${subImagesHtml}
     </div>
   `;
   document.getElementById('detail-sheet').style.display = 'flex';
@@ -898,7 +895,6 @@ function closeDetailSheet() { document.getElementById('detail-sheet').style.disp
 function closeDetailOutside(e) { if (e.target.id==='detail-sheet') closeDetailSheet(); }
 function editCurrentDetail() { closeDetailSheet(); openAddSheet(currentDetailId); }
 
-// 詳細画面から直接削除を行うハンドラ
 async function deleteDetailEntryDirect() {
   if (!currentDetailId) return;
   if (!confirm('このライブ記録を削除しますか？')) return;
@@ -925,7 +921,7 @@ async function deleteDetailEntryDirect() {
 function openAddSheet(editId=null) {
   currentEditId = editId;
   currentTags = [];
-  currentImageData = null;
+  currentImages = []; // 写真配列の初期化
   clearForm();
 
   if (editId) {
@@ -936,12 +932,14 @@ function openAddSheet(editId=null) {
       document.getElementById('f-venue').value = e.venue||'';
       document.getElementById('f-memo').value = e.memo||'';
       currentTags = [...(e.tags||[])];
-      currentImageData = e.imageData||null;
-      if (e.imageData) {
-        const area = document.getElementById('upload-area');
-        area.classList.add('has-image');
-        area.innerHTML = `<img src="${e.imageData}"><input type="file" accept="image/*" id="img-input" onchange="handleImageSelect(event)">`;
+      
+      // 画像データの復元（過去データ互換対応）
+      if (e.images && e.images.length > 0) {
+        currentImages = [...e.images];
+      } else if (e.imageData) {
+        currentImages = [e.imageData];
       }
+      renderFormImagesUI();
     }
     document.getElementById('sheet-title').textContent = 'ライブを編集';
     document.getElementById('delete-btn').style.display = 'block';
@@ -979,48 +977,120 @@ function closeSheetOutside(e) { if (e.target.id==='add-sheet') closeAddSheet(); 
 
 function clearForm() {
   ['f-event','f-date','f-venue','f-memo'].forEach(id => document.getElementById(id).value='');
-  const area = document.getElementById('upload-area');
-  area.classList.remove('has-image');
-  area.innerHTML = `<input type="file" accept="image/*" id="img-input" onchange="handleImageSelect(event)"><div class="upload-icon">📷</div><div class="upload-text">タップして撮影・選択</div><div class="upload-sub">撮影するとOCRで自動入力を試みます</div>`;
+  document.getElementById('form-image-preview-grid').innerHTML = '';
   document.getElementById('ocr-result-preview').style.display = 'none';
+  document.getElementById('ocr-lines-list').textContent = '';
+  document.getElementById('img-input').value = '';
 }
 
-// ===== IMAGE + OCR =====
+// ===== IMAGE MULTI-SELECT & COMPRESS (リサイズ・容量軽量化) =====
 async function handleImageSelect(event) {
-  const file = event.target.files[0];
-  if (!file) return;
+  const files = Array.from(event.target.files);
+  if (!files.length) return;
 
-  const reader = new FileReader();
-  reader.onload = async e => {
-    currentImageData = e.target.result;
-    const area = document.getElementById('upload-area');
-    area.classList.add('has-image');
+  // 最大10枚までの上限チェック
+  if (currentImages.length + files.length > 10) {
+    showToast('⚠️ 写真は合計10枚までしか登録できません');
+    event.target.value = '';
+    return;
+  }
 
-    const oldImg = area.querySelector('img');
-    if (oldImg) oldImg.remove();
+  const overlay = document.getElementById('ocr-overlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    document.getElementById('ocr-status').textContent = '画像を最適化中...';
+  }
 
-    const img = document.createElement('img');
-    img.src = currentImageData;
-    img.style.maxHeight = '220px';
+  // 1枚も画像がない状態から選んだ場合のみ、最初の1枚をOCRの対象にする
+  let shouldTriggerOcr = (currentImages.length === 0);
+  let firstPhotoBase64 = null;
 
-    const input = document.getElementById('img-input');
-    area.insertBefore(img, input);
+  for (const file of files) {
+    try {
+      // 1枚ずつCanvasを通して最大横幅1024pxに圧縮
+      const compressedData = await resizeAndCompressImage(file);
+      currentImages.push(compressedData);
+      if (shouldTriggerOcr && !firstPhotoBase64) {
+        firstPhotoBase64 = compressedData;
+      }
+    } catch (err) {
+      console.error('Compression failed:', err);
+    }
+  }
 
-    await runOCR(currentImageData);
-  };
-  reader.readAsDataURL(file);
+  renderFormImagesUI();
+  event.target.value = ''; // 連続で同じファイルを再選択できるようにリセット
+
+  // OCRの実行（最初の1枚のみ）
+  if (shouldTriggerOcr && firstPhotoBase64) {
+    await runOCR(firstPhotoBase64);
+  } else {
+    if (overlay) overlay.style.display = 'none';
+  }
 }
 
+// Canvasを使用して、画像をIndexedDBに優しいサイズ（最大横幅1024px、jpeg品質0.75）に落とす関数
+function resizeAndCompressImage(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const MAX_WIDTH = 1024; // PWAの内部ストレージ容量を圧迫しないベストサイズ
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // ファイルサイズを1/10近くまで落とせるjpeg形式でBase64化
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+        resolve(compressedBase64);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// フォーム内の追加済み写真サムネイル一覧を描画する
+function renderFormImagesUI() {
+  const grid = document.getElementById('form-image-preview-grid');
+  if (!grid) return;
+  
+  grid.innerHTML = currentImages.map((imgSrc, index) => `
+    <div class="form-img-box">
+      <img src="${imgSrc}">
+      <button class="form-img-rm" onclick="removeFormImage(${index})">✕</button>
+    </div>
+  `).join('');
+}
+
+function removeFormImage(index) {
+  currentImages.splice(index, 1);
+  renderFormImagesUI();
+}
+
+// ===== OCR (日本語+英語 箇条書きコピペ版) =====
 async function runOCR(imageData) {
   const overlay = document.getElementById('ocr-overlay');
-  overlay.style.display = 'flex';
+  if (overlay) overlay.style.display = 'flex';
   document.getElementById('ocr-status').textContent = 'Tesseract.js 読み込み中...';
 
   try {
     if (!window.Tesseract) {
       await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
     }
-    // 日本語と英語のハイブリッドモードに戻します
     document.getElementById('ocr-status').textContent = 'OCR処理中... (日本語+英語)';
 
     const result = await Tesseract.recognize(imageData, 'jpn+eng', {
@@ -1034,18 +1104,15 @@ async function runOCR(imageData) {
     const text = result.data.text;
     window._ocrFullText = text;
 
-    // ── ここから新しい箇条書き表示ロジック ──
     const listEl = document.getElementById('ocr-lines-list');
     const previewEl = document.getElementById('ocr-result-preview');
     
     if (listEl && previewEl) {
-      // 改行で区切って、前後の空白を消し、空行や怪しい1文字記号（. や - など）を除外
       const lines = text.split('\n')
         .map(l => l.trim())
-        .filter(l => l.length > 1); // 2文字以上
+        .filter(l => l.length > 1); // 記号だけのノイズ行を除外
 
       if (lines.length > 0) {
-        // 各行の頭に「・」をつけて箇条書きのテキストを作る
         listEl.textContent = lines.map(l => `・ ${l}`).join('\n');
         previewEl.style.display = 'block';
         showToast(`🔍 ${lines.length} 行の文字を読み取りました`);
@@ -1059,16 +1126,8 @@ async function runOCR(imageData) {
     console.error('OCR error:', err);
     showToast('OCR失敗 — 手動で入力してください');
   } finally {
-    overlay.style.display = 'none';
+    if (overlay) overlay.style.display = 'none';
   }
-}
-
-function loadScript(src) {
-  return new Promise((res,rej)=>{
-    const s=document.createElement('script');
-    s.src=src; s.onload=res; s.onerror=rej;
-    document.head.appendChild(s);
-  });
 }
 
 // ===== TAGS =====
@@ -1086,7 +1145,7 @@ function addTagsUnique(arr) {
   });
   if (added) {
     renderTagsUI();
-    renderTagSuggestions(); // 選択候補リストを即時再計算
+    renderTagSuggestions();
   }
 }
 
@@ -1130,6 +1189,7 @@ function handleTagPaste(ev) {
   }
 }
 
+// タグ要素のUI構築
 function renderTagsUI() {
   const wrap = document.getElementById('tags-wrap');
   const inp  = document.getElementById('tags-input');
@@ -1149,7 +1209,6 @@ function removeTag(i) {
   renderTagSuggestions();
 }
 
-// 入力に応じたリアルタイム候補フィルタリング
 function filterTagSuggestions() {
   renderTagSuggestions();
 }
@@ -1162,7 +1221,6 @@ function renderTagSuggestions() {
   let allTags = [...new Set(entries.flatMap(e => e.tags||[]))]
     .filter(t => !currentNorm.includes(t.trim().toLowerCase()));
 
-  // 入力中の文字があれば部分一致で絞り込む
   if (typedVal !== '') {
     allTags = allTags.filter(t => t.toLowerCase().includes(typedVal));
   }
@@ -1209,10 +1267,7 @@ function _resetSaveBtn() {
 }
 
 async function saveEntry() {
-  if (isSaving) {
-    console.log('[saveEntry] blocked: already saving');
-    return;
-  }
+  if (isSaving) return;
 
   const eventName = document.getElementById('f-event').value.trim();
   const date      = document.getElementById('f-date').value.trim();
@@ -1235,12 +1290,7 @@ async function saveEntry() {
   const deleteBtn = document.getElementById('delete-btn');
   if (saveBtn) {
     saveBtn.disabled = true;
-    saveBtn.innerHTML =
-      '<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center;">' +
-      '<span style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.35);' +
-      'border-top-color:#fff;border-radius:50%;' +
-      'animation:spin 0.7s linear infinite;display:inline-block;flex-shrink:0;"></span>' +
-      '保存中...</span>';
+    saveBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center;"><span style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;flex-shrink:0;"></span>保存中...</span>';
   }
   if (deleteBtn) deleteBtn.disabled = true;
 
@@ -1249,9 +1299,7 @@ async function saveEntry() {
   try {
     const isEdit   = !!currentEditId;
     const existing = isEdit ? entries.find(e => e.id === currentEditId) : null;
-    const entryId  = isEdit
-      ? currentEditId
-      : ('live_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
+    const entryId  = isEdit ? currentEditId : ('live_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
 
     const entry = {
       id:        entryId,
@@ -1260,29 +1308,21 @@ async function saveEntry() {
       venue,
       memo,
       tags:      [...currentTags],
-      imageData: currentImageData,
+      images:    [...currentImages], // 新しい複数枚配列を格納
+      imageData: currentImages.length > 0 ? currentImages[0] : null, // 過去バージョン互換用に1枚目のデータを保持
       ocrText:   window._ocrFullText || (existing ? existing.ocrText || '' : ''),
-      createdAt: existing
-        ? (existing.createdAt || new Date().toISOString())
-        : new Date().toISOString(),
+      createdAt: existing ? (existing.createdAt || new Date().toISOString()) : new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
 
-    console.log('[saveEntry] saving id=', entry.id, 'isEdit=', isEdit);
-
     await dbPut(entry);
-    console.log('[saveEntry] save completed ✅');
-
     entries = await dbAll();
-    console.log('[saveEntry] state refreshed, total=', entries.length);
-
     window._ocrFullText = '';
 
     renderList();
     renderTimeline();
     renderStats();
     renderFilterChips();
-    console.log('[saveEntry] list refreshed ✅');
 
     _resetSaveBtn();
     currentEditId = null;
@@ -1292,7 +1332,6 @@ async function saveEntry() {
       sheet.style.display = 'none';
       sheet.classList.add('hidden');
     }
-    console.log('[saveEntry] modal closed ✅');
 
     currentTab = 'list';
     ['list','timeline','settings'].forEach(t => {
@@ -1330,17 +1369,12 @@ function showFormError(msg) {
 async function deleteCurrentEntry() {
   if (!currentEditId) return;
   if (!confirm('このライブ記録を削除しますか？')) return;
-
   const deleteBtn = document.getElementById('delete-btn');
   if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = '削除中...'; }
-
   try {
     await dbDelete(currentEditId);
     entries = await dbAll();
-    renderList();
-    renderTimeline();
-    renderStats();
-    renderFilterChips();
+    renderList(); renderTimeline(); renderStats(); renderFilterChips();
     closeAddSheet();
     if (currentTab !== 'list') switchTab('list');
     showToast('🗑 削除しました');
@@ -1352,7 +1386,7 @@ async function deleteCurrentEntry() {
 }
 
 // ===== BACKUP SYSTEM =====
-const APP_VERSION = "2.0";
+const APP_VERSION = "2.1"; // 新しいバージョン2.1として設定
 const SCHEMA_VERSION = 2;
 const BACKUP_HISTORY_KEY = "livelog_backup_history";
 let exportIncludeImages = true;
@@ -1376,8 +1410,7 @@ function refreshSettingsLabels() {
   const lastEl = document.getElementById('last-export-label');
   if (lastEl) {
     if (hist.length > 0) {
-      const last = hist[0];
-      lastEl.textContent = `最終: ${last.dateLocal}（${last.count}件）`;
+      lastEl.textContent = `最終: ${hist[0].dateLocal}（${hist[0].count}件）`;
     } else {
       lastEl.textContent = '画像を含む全データをJSONで保存';
     }
@@ -1397,7 +1430,6 @@ function refreshSettingsLabels() {
       <span style="font-size:11px;color:var(--text3);">${h.withImages ? '📷' : '📄'}</span>
     </div>
   `).join('');
-
   calcDataSize();
 }
 
@@ -1408,14 +1440,24 @@ async function calcDataSize() {
     const all = await dbAll();
     const json = JSON.stringify(all);
     const kb = Math.round(json.length / 1024);
-    const imgCount = all.filter(e => e.imageData).length;
-    el.textContent = `${all.length}件 · 約${kb}KB · 画像${imgCount}枚`;
+    
+    // 総画像枚数の計算（複数枚対応配列＋過去データ互換カウント）
+    let totalImgCount = 0;
+    all.forEach(e => {
+      if (e.images) totalImgCount += e.images.length;
+      else if (e.imageData) totalImgCount += 1;
+    });
+    el.textContent = `${all.length}件 · 約${kb}KB · 画像${totalImgCount}枚`;
   } catch { el.textContent = '計算できませんでした'; }
 }
 
 async function openExportSheet() {
   const all = await dbAll();
-  const imgCount = all.filter(e => e.imageData).length;
+  let totalImgCount = 0;
+  all.forEach(e => {
+    if (e.images) totalImgCount += e.images.length;
+    else if (e.imageData) totalImgCount += 1;
+  });
   const today = new Date();
   const dateStr = today.toISOString().slice(0,10);
 
@@ -1428,8 +1470,8 @@ async function openExportSheet() {
       <div style="font-size:11px;color:var(--text3);margin-top:2px;">ライブ記録</div>
     </div>
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
-      <div style="font-size:22px;font-weight:700;color:var(--accent);">${imgCount}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">画像あり</div>
+      <div style="font-size:22px;font-weight:700;color:var(--accent);">${totalImgCount}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">総画像数</div>
     </div>
     <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
       <div style="font-size:22px;font-weight:700;color:var(--accent);">${[...new Set(all.flatMap(e=>e.tags||[]))].length}</div>
@@ -1457,7 +1499,7 @@ async function updateExportSizeEst(allData) {
   if (exportIncludeImages) {
     size = JSON.stringify(allData).length;
   } else {
-    const stripped = allData.map(e => { const c = {...e}; delete c.imageData; return c; });
+    const stripped = allData.map(e => { const c = {...e}; delete c.images; delete c.imageData; return c; });
     size = JSON.stringify(stripped).length;
   }
   const kb = Math.round(size / 1024);
@@ -1474,9 +1516,7 @@ function toggleExportImages() {
   dbAll().then(all => updateExportSizeEst(all));
 }
 
-function closeExportSheet() {
-  document.getElementById('export-sheet').style.display = 'none';
-}
+function closeExportSheet() { document.getElementById('export-sheet').style.display = 'none'; }
 
 async function executeExport() {
   const btn = document.getElementById('export-btn');
@@ -1497,7 +1537,10 @@ async function executeExport() {
     const processed = [];
     for (let i = 0; i < all.length; i++) {
       const entry = {...all[i]};
-      if (!exportIncludeImages) delete entry.imageData;
+      if (!exportIncludeImages) {
+        delete entry.images;
+        delete entry.imageData;
+      }
       processed.push(entry);
 
       const pct = Math.round((i + 1) / all.length * 80);
@@ -1511,7 +1554,6 @@ async function executeExport() {
     progressBar.style.width = '90%';
     await new Promise(r => setTimeout(r, 0));
 
-    const imgCount = all.filter(e => e.imageData).length;
     const totalSizeKB = Math.round(JSON.stringify(processed).length / 1024);
 
     const backup = {
@@ -1522,7 +1564,6 @@ async function executeExport() {
       memo: memo || '',
       stats: {
         total: all.length,
-        withImage: imgCount,
         totalSizeKB,
         includesImages: exportIncludeImages,
       },
@@ -1570,16 +1611,8 @@ async function executeExport() {
   }
 }
 
-function openImportSheet() {
-  resetImportStep();
-  document.getElementById('import-sheet').style.display = 'flex';
-}
-
-function closeImportSheet() {
-  document.getElementById('import-sheet').style.display = 'none';
-  document.getElementById('import-file').value = '';
-  pendingImportData = null;
-}
+function openImportSheet() { resetImportStep(); document.getElementById('import-sheet').style.display = 'flex'; }
+function closeImportSheet() { document.getElementById('import-sheet').style.display = 'none'; document.getElementById('import-file').value = ''; pendingImportData = null; }
 
 function resetImportStep() {
   document.getElementById('import-step1').style.display = 'block';
@@ -1612,32 +1645,13 @@ async function handleImportFile(event) {
     const schemaVer = data.schemaVersion || 1;
     const appVer = data.appVersion || '不明';
     const exportedAt = data.exportedAtLocal || (data.exportedAt ? new Date(data.exportedAt).toLocaleString('ja-JP') : '不明');
-    const stats = data.stats || {};
-    const hasImages = list.some(e => e.imageData);
 
     document.getElementById('import-backup-info').innerHTML = `
       <div style="display:grid;gap:6px;font-size:13px;">
-        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
-          <span style="color:var(--text3);">作成日時</span>
-          <span style="font-weight:500;">${esc(exportedAt)}</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
-          <span style="color:var(--text3);">ライブ記録数</span>
-          <span style="font-weight:500;color:var(--accent);">${list.length}件</span>
-        </div>
-        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
-          <span style="color:var(--text3);">画像データ</span>
-          <span style="font-weight:500;">${hasImages ? '含まれています 📷' : '含まれていません'}</span>
-        </div>
-        ${data.memo ? `<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);">
-          <span style="color:var(--text3);">メモ</span>
-          <span style="font-weight:500;">${esc(data.memo)}</span>
-        </div>` : ''}
-        <div style="display:flex;justify-content:space-between;padding:4px 0;">
-          <span style="color:var(--text3);">スキーマ / アプリ</span>
-          <span style="font-weight:500;">v${schemaVer} / ${esc(appVer)}</span>
-        </div>
-        ${schemaVer > SCHEMA_VERSION ? `<div style="color:var(--danger);font-size:12px;margin-top:4px;">⚠️ このバックアップは新しいバージョンで作成されています。一部のデータが失われる可能性があります。</div>` : ''}
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">作成日時</span><span style="font-weight:500;">${esc(exportedAt)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">ライブ記録数</span><span style="font-weight:500;color:var(--accent);">${list.length}件</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:var(--text3);">アプリバージョン</span><span style="font-weight:500;">v${esc(appVer)}</span></div>
+        ${schemaVer > SCHEMA_VERSION ? `<div style="color:var(--danger);font-size:12px;margin-top:4px;">⚠️ 新しいバージョンのデータです。</div>` : ''}
       </div>
     `;
 
@@ -1661,9 +1675,7 @@ function updateImportMode() {
   warn.style.display = mode === 'overwrite' ? 'block' : 'none';
   const btn = document.getElementById('import-execute-btn');
   btn.textContent = mode === 'overwrite' ? '⚠️ 上書きして復元する' : '✓ マージして復元する';
-  btn.style.background = mode === 'overwrite'
-    ? 'linear-gradient(135deg,#b91c1c,#ef4444)'
-    : 'linear-gradient(135deg,var(--accent3),var(--accent2))';
+  btn.style.background = mode === 'overwrite' ? 'linear-gradient(135deg,#b91c1c,#ef4444)' : 'linear-gradient(135deg,var(--accent3),var(--accent2))';
 }
 
 async function executeImport() {
@@ -1671,14 +1683,11 @@ async function executeImport() {
   const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
   const list = pendingImportData.entries;
 
-  if (mode === 'overwrite') {
-    if (!confirm(`⚠️ 現在の${entries.length}件をすべて削除してバックアップ${list.length}件を復元します。\n\nこの操作は取り消せません。続けますか？`)) return;
-  }
+  if (mode === 'overwrite' && !confirm(`⚠️ 現在のデータがすべて削除されます。続けますか？`)) return;
 
   const progressWrap = document.getElementById('import-progress-wrap');
   const progressBar = document.getElementById('import-progress-bar');
   const progressLabel = document.getElementById('import-progress-label');
-  const progressPct = document.getElementById('import-progress-pct');
   const btn = document.getElementById('import-execute-btn');
 
   btn.disabled = true;
@@ -1688,13 +1697,7 @@ async function executeImport() {
     if (mode === 'overwrite') {
       progressLabel.textContent = '既存データを削除中...';
       const existing = await dbAll();
-      for (let i = 0; i < existing.length; i++) {
-        await dbDelete(existing[i].id);
-        const pct = Math.round((i + 1) / existing.length * 30);
-        progressBar.style.width = pct + '%';
-        progressPct.textContent = pct + '%';
-        if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
-      }
+      for (const e of existing) await dbDelete(e.id);
     }
 
     for (let i = 0; i < list.length; i++) {
@@ -1703,34 +1706,19 @@ async function executeImport() {
       entry.importedAt = new Date().toISOString();
       await dbPut(entry);
 
-      const base = mode === 'overwrite' ? 30 : 0;
-      const pct = base + Math.round((i + 1) / list.length * (100 - base));
+      const pct = Math.round((i + 1) / list.length * 100);
       progressBar.style.width = pct + '%';
-      progressPct.textContent = pct + '%';
       progressLabel.textContent = `インポート中 ${i+1}/${list.length}件...`;
       if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
     }
 
-    progressBar.style.width = '100%';
-    progressPct.textContent = '100%';
-    progressLabel.textContent = '完了！';
-
     entries = await dbAll();
-    renderList();
-    renderTimeline();
-    renderStats();
-    renderFilterChips();
-    refreshSettingsLabels();
-
-    await new Promise(r => setTimeout(r, 500));
+    renderList(); renderTimeline(); renderStats(); renderFilterChips(); refreshSettingsLabels();
     closeImportSheet();
     showToast(`📥 ${list.length}件を復元しました`);
 
   } catch(err) {
-    console.error(err);
-    showToast('復元中にエラーが発生しました');
-    btn.disabled = false;
-    progressWrap.style.display = 'none';
+    console.error(err); showToast('復元中にエラーが発生しました'); btn.disabled = false;
   }
 }
 
@@ -1738,114 +1726,38 @@ async function showDataInfo() {
   const all = await dbAll();
   const json = JSON.stringify(all);
   const totalKB = Math.round(json.length / 1024);
-  const imgKB = Math.round(JSON.stringify(all.map(e=>({imageData:e.imageData||''}))).length / 1024);
-  const metaKB = totalKB - imgKB;
-
   const years = [...new Set(all.map(e=>e.date?.slice(0,4)).filter(Boolean))].sort((a,b)=>b-a);
-  const artists = [...new Set(all.flatMap(e=>e.tags||[]))].sort();
-  const venues = [...new Set(all.map(e=>e.venue).filter(Boolean))].sort();
 
   document.getElementById('datainfo-content').innerHTML = `
     <div style="margin-bottom:20px;">
-      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:10px;">ストレージ使用量</div>
+      <div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:10px;">ストレージ使用量</div>
       <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;">
-        <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-          <span style="font-size:13px;color:var(--text2);">全体</span>
-          <span style="font-size:13px;font-weight:600;">${totalKB.toLocaleString()} KB</span>
-        </div>
-        <div style="height:6px;background:var(--bg4);border-radius:3px;overflow:hidden;margin-bottom:8px;">
-          <div style="height:100%;width:${Math.min(imgKB/totalKB*100,100)}%;background:linear-gradient(90deg,var(--accent3),var(--accent));border-radius:3px;"></div>
-        </div>
-        <div style="display:flex;gap:16px;font-size:11px;color:var(--text3);">
-          <span>📷 画像: ${imgKB.toLocaleString()} KB</span>
-          <span>📝 メタデータ: ${metaKB.toLocaleString()} KB</span>
-        </div>
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:13px;color:var(--text2);">全体データサイズ</span><span style="font-size:13px;font-weight:600;">${totalKB.toLocaleString()} KB</span></div>
       </div>
     </div>
-
     <div style="margin-bottom:20px;">
-      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:10px;">年別内訳</div>
+      <div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:10px;">年別内訳</div>
       ${years.map(y => {
         const cnt = all.filter(e=>e.date?.startsWith(y)).length;
-        return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;">
-          <span style="color:var(--text2);">${y}年</span>
-          <span style="font-weight:600;color:var(--accent);">${cnt}公演</span>
-        </div>`;
-      }).join('') || '<div style="color:var(--text3);font-size:13px;">データなし</div>'}
-    </div>
-
-    ${artists.length ? `
-    <div style="margin-bottom:20px;">
-      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:10px;">アーティスト (${artists.length})</div>
-      <div style="display:flex;flex-wrap:wrap;gap:6px;">
-        ${artists.slice(0,20).map(a => `<span class="tag">${esc(a)}</span>`).join('')}
-        ${artists.length > 20 ? `<span style="font-size:11px;color:var(--text3);padding:4px;">他${artists.length-20}件...</span>` : ''}
-      </div>
-    </div>` : ''}
-
-    ${venues.length ? `
-    <div>
-      <div style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;font-weight:600;margin-bottom:10px;">会場 (${venues.length})</div>
-      ${venues.slice(0,10).map(v => {
-        const cnt = all.filter(e=>e.venue===v).length;
-        return `<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);font-size:13px;">
-          <span style="color:var(--text2);">${esc(v)}</span>
-          <span style="font-weight:500;">${cnt}回</span>
-        </div>`;
+        return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><span style="color:var(--text2);">${y}年</span><span style="font-weight:600;color:var(--accent);">${cnt}公演</span></div>`;
       }).join('')}
-    </div>` : ''}
+    </div>
   `;
   document.getElementById('datainfo-sheet').style.display = 'flex';
 }
 
-function closeDataInfoSheet() {
-  document.getElementById('datainfo-sheet').style.display = 'none';
-}
+function closeDataInfoSheet() { document.getElementById('datainfo-sheet').style.display = 'none'; }
 
-async function confirmDeleteAll() {
-  const all = await dbAll();
-  if (all.length === 0) { showToast('削除するデータがありません'); return; }
-  if (!confirm(`⚠️ 全${all.length}件のデータを削除します。\n\n先にバックアップを作成することを強くおすすめします。\n\n本当に削除しますか？`)) return;
-  if (!confirm('最終確認: この操作は取り消せません。削除しますか？')) return;
-  for (const e of all) await dbDelete(e.id);
-  entries = [];
-  renderList(); renderTimeline(); renderStats(); renderFilterChips(); refreshSettingsLabels();
-  showToast('🗑 全データを削除しました');
-}
-
-async function exportData() { await openExportSheet(); }
-async function importData(event) { await handleImportFile(event); }
-
-// ===== UTILS =====
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-}
-
-function fmtDate(d) {
-  if (!d) return '';
-  const [y,m,day] = d.split('-');
-  if (!y) return d;
-  const weekdays = ['日','月','火','水','木','金','土'];
-  const dt = new Date(d);
-  const w = weekdays[dt.getDay()];
-  return `${y}年${parseInt(m)}月${parseInt(day)}日(${w})`;
-}
-
-let toastTimer;
 // ===== SERVICE WORKER (自動更新・強制リフレッシュ対応版) =====
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('./sw.js').then(reg => {
-      
-      // 定期的にサーバーへ最新の sw.js がないかチェックしに行く（起動ごと）
       reg.update();
-
       reg.addEventListener('updatefound', () => {
         const newWorker = reg.installing;
         if (!newWorker) return;
         newWorker.addEventListener('statechange', () => {
           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-            // 新しいバージョンが裏でダウンロード完了したら、強制的に切り替える
             newWorker.postMessage({ type: 'SKIP_WAITING' });
             showToast('🔄 新しいバージョンを適用中...');
           }
@@ -1853,28 +1765,22 @@ if ('serviceWorker' in navigator) {
       });
     }).catch(err => console.warn('[SW] register failed:', err));
 
-    // サービスワーカーが切り替わったら、1回だけページをリロードして最新版にする
     let refreshing = false;
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (!refreshing) {
         refreshing = true;
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000); // トーストを見せるために1秒だけ待ってリロード
+        setTimeout(() => { window.location.reload(); }, 1000);
       }
     });
   });
 }
 
-function showToast(msg) {
-  clearTimeout(toastTimer);
-  let t = document.querySelector('.toast');
-  if (t) t.remove();
-  t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  document.body.appendChild(t);
-  toastTimer = setTimeout(()=>t.remove(), 2500);
+// ===== UTILS =====
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function fmtDate(d) {
+  if (!d) return ''; const [y,m,day] = d.split('-'); if (!y) return d;
+  const weekdays = ['日','月','火','水','木','金','土'];
+  return `${y}年${parseInt(m)}月${parseInt(day)}日(${weekdays[new Date(d).getDay()]})`;
 }
 </script>
 </body>
