@@ -35,7 +35,7 @@
   html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, 'Hiragino Sans', 'Hiragino Kaku Gothic ProN', sans-serif; overflow: hidden; }
   #app { height: 100%; display: flex; flex-direction: column; }
 
-  /* REMINDER BAR */
+  /* REMINDER BAR (NEW v2.2) */
   .reminder-bar {
     background: linear-gradient(90deg, #3b1d60, #1c1c26);
     border-bottom: 1px solid var(--border2);
@@ -69,6 +69,7 @@
     background: var(--bg2); border-bottom: 1px solid var(--border);
     display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
   }
+  /* リマインドバーが出ていない時だけヘッダー上部にセーフエリアを確保 */
   body:not(.has-reminder) .header { padding-top: calc(var(--safe-top) + 14px); }
   .header-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
   .header-title span { color: var(--accent); }
@@ -118,7 +119,7 @@
   /* IMAGE UPLOAD & MULTI PREVIEW */
   .img-upload-area {
     border: 2px dashed var(--border2); border-radius: var(--radius); padding: 24px;
-    text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative; overflow: hidden;
+    text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; position: relative;overflow: hidden;
   }
   .img-upload-area:active { background: var(--bg3); }
   .img-upload-area input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
@@ -130,9 +131,6 @@
   .form-img-box { position: relative; aspect-ratio: 1; background: var(--bg3); border-radius: var(--radius-sm); border: 1px solid var(--border); overflow: hidden; }
   .form-img-box img { width: 100%; height: 100%; object-fit: cover; }
   .form-img-rm { position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; background: rgba(0,0,0,0.7); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; cursor: pointer; border: none; z-index: 10; }
-
-  /* 選びすぎたとき用の警告表示エリア */
-  .photo-warning-box { display: none; background: rgba(248,113,113,0.12); border: 1px solid rgba(248,113,113,0.4); border-radius: 8px; padding: 10px 12px; font-size: 13px; color: #f87171; margin-top: 10px; line-height: 1.4; }
 
   /* BUTTONS */
   .btn { border: none; border-radius: var(--radius-sm); font-size: 16px; font-weight: 600; padding: 14px 20px; cursor: pointer; width: 100%; font-family: inherit; transition: opacity 0.2s, transform 0.1s; }
@@ -153,7 +151,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
   .ocr-text { color: var(--text2); font-size: 14px; }
 
-  /* DETAIL VIEW */
+  /* DETAIL VIEW (MULTI IMAGE VERTICAL PILE) */
   .detail-view { padding: 0; }
   .detail-img { width: 100%; max-height: 280px; object-fit: cover; display: block; background: var(--bg3); }
   .detail-sub-img-stack { display: flex; flex-direction: column; gap: 10px; margin-top: 16px; width: 100%; }
@@ -177,15 +175,14 @@
   .timeline-item:last-child { border-bottom: none; }
   .timeline-thumb { width: 52px; height: 52px; border-radius: var(--radius-sm); object-fit: cover; flex-shrink: 0; background: var(--bg3); display: flex; align-items: center; justify-content: center; font-size: 22px; }
   .timeline-info { flex: 1; min-width: 0; }
-  .timeline-event { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .timeline-event { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 3px; }
   .timeline-meta { font-size: 11px; color: var(--text2); margin-top: 2px; }
 
-  /* SEARCH */
+  /* SEARCH & CLEAR */
   .search-bar { padding: 10px 14px; background: var(--bg2); border-bottom: 1px solid var(--border); }
   .search-input-wrap { position: relative; }
   .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text3); font-size: 16px; }
   .search-bar input { padding-left: 36px; padding-right: 36px; font-size: 14px; }
-  
   #search-clear {
     position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
     background: var(--bg4); border: none; color: var(--text2); font-size: 11px;
@@ -233,6 +230,11 @@
 
   /* FAB */
   .fab { position: fixed; bottom: calc(70px + var(--safe-bottom)); right: 16px; width: 54px; height: 54px; background: linear-gradient(135deg, var(--accent3), var(--accent2)); border: none; border-radius: 50%; color: #fff; font-size: 26px; cursor: pointer; z-index: 50; box-shadow: 0 4px 20px rgba(192,132,252,0.4); display: flex; align-items: center; justify-content: center; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 3px; height: 3px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 </style>
 </head>
 <body>
@@ -407,10 +409,7 @@
     </div>
     <div class="form-container">
       <div class="form-group">
-        <label style="display: flex; justify-content: space-between; align-items: center;">
-          <span>写真 (1枚目のみOCR読み取り対象)</span>
-          <span id="image-count-badge" style="color: var(--accent); font-weight: 600;">0 / 10枚</span>
-        </label>
+        <label>写真 (最大10枚選択可 — 1枚目のみOCR読み取り対象)</label>
         <div class="img-upload-area" id="upload-area">
           <input type="file" accept="image/*" id="img-input" multiple onchange="handleImageSelect(event)">
           <div class="upload-icon">📷</div>
@@ -418,8 +417,6 @@
           <div class="upload-sub">1枚目の写真から文字コピペ用の読み取りを行います</div>
         </div>
         
-        <div id="photo-limit-warning" class="photo-warning-box"></div>
-
         <div class="form-image-grid" id="form-image-preview-grid"></div>
 
         <div id="ocr-result-preview" style="display:none; margin-top:8px; padding:8px 10px; background:rgba(192,132,252,0.1); border:1px solid var(--border2); border-radius:var(--radius-sm); font-size:12px; color:var(--text2);">
@@ -498,7 +495,7 @@
       </div>
       <div class="form-group">
         <label>バックアップメモ（任意）</label>
-        <input type="text" id="export-filename" placeholder="LiveLog.json" style="font-size:13px;">
+        <input type="text" id="export-memo" placeholder="例: 定期バックアップ">
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:16px;">
         <div>
@@ -625,16 +622,43 @@ function openDB() {
   });
 }
 
-function dbAll() { return new Promise((res, rej) => { const tx = db.transaction(STORE, 'readonly'); const req = tx.objectStore(STORE).getAll(); req.onsuccess = e => res(e.target.result); req.onerror = e => rej(e.target.error); }); }
-function dbPut(entry) { return new Promise((res, rej) => { const tx  = db.transaction(STORE, 'readwrite'); const req = tx.objectStore(STORE).put(entry); tx.oncomplete = () => res(); tx.onerror    = e  => rej(e.target.error); tx.onabort    = e  => rej(e.target.error); req.onerror   = e  => rej(e.target.error); }); }
-function dbDelete(id) { return new Promise((res, rej) => { const tx  = db.transaction(STORE, 'readwrite'); const req = tx.objectStore(STORE).delete(id); tx.oncomplete = () => res(); tx.onerror    = e  => rej(e.target.error); tx.onabort    = e  => rej(e.target.error); req.onerror   = e  => rej(e.target.error); }); }
+function dbAll() {
+  return new Promise((res, rej) => {
+    const tx = db.transaction(STORE, 'readonly');
+    const req = tx.objectStore(STORE).getAll();
+    req.onsuccess = e => res(e.target.result);
+    req.onerror = e => rej(e.target.error);
+  });
+}
+
+function dbPut(entry) {
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).put(entry);
+    tx.oncomplete = () => res();
+    tx.onerror    = e  => rej(e.target.error);
+    tx.onabort    = e  => rej(e.target.error);
+    req.onerror   = e  => rej(e.target.error);
+  });
+}
+
+function dbDelete(id) {
+  return new Promise((res, rej) => {
+    const tx  = db.transaction(STORE, 'readwrite');
+    const req = tx.objectStore(STORE).delete(id);
+    tx.oncomplete = () => res();
+    tx.onerror    = e  => rej(e.target.error);
+    tx.onabort    = e  => rej(e.target.error);
+    req.onerror   = e  => rej(e.target.error);
+  });
+}
 
 // ===== STATE =====
 let entries = [];
 let currentTags = [];
 let currentEditId = null;
 let currentDetailId = null;
-let currentImages = []; // 複数画像 Base64配列
+let currentImages = []; // 複数画像 Base64データを格納する配列（最大10枚）
 let searchQuery = '';
 let activeFilter = 'all';
 let currentTab = 'list';
@@ -647,10 +671,10 @@ openDB().then(async () => {
   renderStats();
   renderFilterChips();
   setToday();
-  checkBackupReminder();
+  checkBackupReminder(); // 修正ポイント①：アプリ起動時に1ヶ月経過リマインドの条件判定を行う
   requestAnimationFrame(() => {
     const badge = document.getElementById('version-badge');
-    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '2.3');
+    if (badge) badge.textContent = 'v' + (typeof APP_VERSION !== 'undefined' ? APP_VERSION : '2.2');
     refreshSettingsLabels();
   });
 }).catch(e => console.error('[init]', e));
@@ -660,23 +684,43 @@ function setToday() {
   document.getElementById('f-date').value = today;
 }
 
+// ===== 修正ポイント①：1ヶ月リマインド判定ロジック =====
 function checkBackupReminder() {
   const hist = getBackupHistory();
   const reminderBar = document.getElementById('backup-reminder');
   if (!reminderBar) return;
+
   if (hist.length > 0) {
+    // 直近バックアップのタイムスタンプを取得
     const lastBackupTime = hist[0].timestamp || new Date(hist[0].dateLocal.replace(/\//g, '-')).getTime();
     const diffDays = (Date.now() - lastBackupTime) / (1000 * 60 * 60 * 24);
-    if (diffDays >= 30) { reminderBar.style.display = 'flex'; document.body.classList.add('has-reminder'); }
-    else { reminderBar.style.display = 'none'; document.body.classList.remove('has-reminder'); }
+
+    if (diffDays >= 30) { // 30日以上経っていたら
+      reminderBar.style.display = 'flex';
+      document.body.classList.add('has-reminder');
+    } else {
+      reminderBar.style.display = 'none';
+      document.body.classList.remove('has-reminder');
+    }
   } else {
-    if (entries.length >= 5) { reminderBar.style.display = 'flex'; document.body.classList.add('has-reminder'); }
-    else { reminderBar.style.display = 'none'; document.body.classList.remove('has-reminder'); }
+    // 過去に一度もバックアップ履歴がないが、データ件数が5件以上ある場合にのみ親切心で出す
+    if (entries.length >= 5) {
+      reminderBar.style.display = 'flex';
+      document.body.classList.add('has-reminder');
+    } else {
+      reminderBar.style.display = 'none';
+      document.body.classList.remove('has-reminder');
+    }
   }
 }
 
-function jumpToBackupSettings() { switchTab('settings'); openExportSheet(); }
+// 通知バーのボタンを押した時に、設定画面のバックアップを開く一発ジャンプ関数
+function jumpToBackupSettings() {
+  switchTab('settings');
+  openExportSheet();
+}
 
+// ===== NAV =====
 function switchTab(tab) {
   currentTab = tab;
   ['list','timeline','settings'].forEach(t => {
@@ -684,7 +728,9 @@ function switchTab(tab) {
     document.getElementById('nav-'+t).classList.toggle('active', t===tab);
   });
   document.getElementById('fab-btn').style.display = tab==='settings' ? 'none' : 'flex';
-  if (tab==='list') renderList(); if (tab==='timeline') renderTimeline(); if (tab==='settings') renderStats();
+  if (tab==='list') renderList();
+  if (tab==='timeline') renderTimeline();
+  if (tab==='settings') renderStats();
 }
 
 // ===== RENDER LIST =====
@@ -702,12 +748,24 @@ function renderList() {
     }
     return true;
   }).sort((a,b) => (b.date||'') > (a.date||'') ? 1 : -1);
+
   updateFilterBanner();
+
   const container = document.getElementById('list-container');
   const empty = document.getElementById('empty-state');
+
   if (filtered.length === 0) {
     container.innerHTML = '';
-    if (empty) { empty.style.display = ''; }
+    if (empty) {
+      empty.style.display = '';
+      if (activeFilter !== 'all') {
+        empty.querySelector('.empty-title').textContent = '該当する記録がありません';
+        empty.querySelector('.empty-sub').textContent = `「${activeFilter}」のライブ記録が見つかりません`;
+      } else {
+        empty.querySelector('.empty-title').textContent = '記録がまだありません';
+        empty.querySelector('.empty-sub').textContent = '右下の＋ボタンからライブ参戦を記録しましょう';
+      }
+    }
     return;
   }
   if (empty) empty.style.display = 'none';
@@ -724,29 +782,95 @@ function renderList() {
             <span>📅 ${fmtDate(e.date)}</span>
             ${e.venue ? `<span>📍 ${esc(e.venue)}</span>` : ''}
           </div>
-          <div class="tags-row">${(e.tags||[]).map(t => { const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase(); return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="handleTagClick(event,this)">' + esc(t) + '</span>'; }).join('')}</div>
+          <div class="tags-row">${(e.tags||[]).map(t => {
+            const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase();
+            return '<span class="tag tag-clickable' + (isActive?' tag-active':'') + '" data-tag="' + esc(t) + '" onclick="handleTagClick(event,this)">' + esc(t) + '</span>';
+          }).join('')}</div>
         </div>
       </div>
     `;
   }).join('');
 }
 
-function updateFilterBanner() { const banner = document.getElementById('filter-banner'); if (!banner) return; if (activeFilter === 'all') { banner.classList.remove('visible'); } else { banner.classList.add('visible'); const text = document.getElementById('filter-banner-text'); if (text) text.textContent = `🎵 「${activeFilter}」で絞り込み中`; } }
-function renderFilterChips() { const allTags = [...new Set(entries.flatMap(e=>e.tags||[]))].sort(); const chips = document.getElementById('filter-chips'); chips.innerHTML = '<div class="chip' + (activeFilter==='all'?' active':'') + '" onclick="setFilter(\'all\')">すべて</div>'; allTags.forEach(t => { const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === activeFilter.trim().toLowerCase(); const d = document.createElement('div'); d.className = 'chip' + (isActive ? ' active' : ''); d.textContent = t; d.onclick = () => setFilter(t); chips.appendChild(d); }); }
-function handleTagFilter(el) { const tag = el && el.dataset && el.dataset.tag; if (tag) setFilter(tag); }
-function handleTagClick(event, el) { event.stopPropagation(); handleTagFilter(el); }
-function setFilter(f) { activeFilter = f; renderFilterChips(); renderList(); }
-document.getElementById('search-input').addEventListener('input', e => { searchQuery = e.target.value; const clearBtn = document.getElementById('search-clear'); if (clearBtn) { clearBtn.style.display = searchQuery.length > 0 ? 'flex' : 'none'; } renderList(); });
-function clearSearch() { const input = document.getElementById('search-input'); const clearBtn = document.getElementById('search-clear'); if (input) input.value = ''; if (clearBtn) clearBtn.style.display = 'none'; searchQuery = ''; renderList(); if (input) input.focus(); }
+function updateFilterBanner() {
+  const banner = document.getElementById('filter-banner');
+  const text   = document.getElementById('filter-banner-text');
+  if (!banner) return;
+  if (activeFilter === 'all') {
+    banner.classList.remove('visible');
+  } else {
+    banner.classList.add('visible');
+    if (text) text.textContent = `🎵 「${activeFilter}」で絞り込み中`;
+  }
+}
+
+// ===== FILTER CHIPS =====
+function renderFilterChips() {
+  const allTags = [...new Set(entries.flatMap(e=>e.tags||[]))].sort();
+  const chips = document.getElementById('filter-chips');
+  const filterNorm = activeFilter.trim().toLowerCase();
+
+  chips.innerHTML = '<div class="chip' + (activeFilter==='all'?' active':'') + '" onclick="setFilter(\'all\')">すべて</div>';
+  allTags.forEach(t => {
+    const isActive = activeFilter !== 'all' && t.trim().toLowerCase() === filterNorm;
+    const d = document.createElement('div');
+    d.className = 'chip' + (isActive ? ' active' : '');
+    d.textContent = t;
+    d.onclick = () => setFilter(t);
+    chips.appendChild(d);
+  });
+}
+
+function handleTagFilter(el) {
+  const tag = el && el.dataset && el.dataset.tag;
+  if (tag) setFilter(tag);
+}
+function handleTagClick(event, el) {
+  event.stopPropagation();
+  handleTagFilter(el);
+}
+
+function setFilter(f) {
+  activeFilter = f;
+  renderFilterChips();
+  renderList();
+}
+
+document.getElementById('search-input').addEventListener('input', e => {
+  searchQuery = e.target.value;
+  const clearBtn = document.getElementById('search-clear');
+  if (clearBtn) {
+    clearBtn.style.display = searchQuery.length > 0 ? 'flex' : 'none';
+  }
+  renderList();
+});
+
+function clearSearch() {
+  const input = document.getElementById('search-input');
+  const clearBtn = document.getElementById('search-clear');
+  if (input) input.value = '';
+  if (clearBtn) clearBtn.style.display = 'none';
+  searchQuery = '';
+  renderList();
+  if (input) input.focus();
+}
 
 // ===== RENDER TIMELINE =====
 function renderTimeline() {
   const container = document.getElementById('timeline-container');
-  if (!container) return;
-  if (entries.length === 0) { container.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">タイムラインが空です</div></div>`; return; }
+  if (entries.length === 0) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📅</div><div class="empty-title">タイムラインが空です</div><div class="empty-sub">ライブを記録するとここに<br>タイムラインが表示されます</div></div>`;
+    return;
+  }
   const sorted = [...entries].sort((a,b) => b.date > a.date ? 1 : -1);
   const byYear = {};
-  sorted.forEach(e => { const y = e.date ? e.date.slice(0,4) : '不明'; if (!byYear[y]) byYear[y] = {}; const m = e.date ? e.date.slice(5,7) : '00'; if (!byYear[y][m]) byYear[y][m] = []; byYear[y][m].push(e); });
+  sorted.forEach(e => {
+    const y = e.date ? e.date.slice(0,4) : '不明';
+    if (!byYear[y]) byYear[y] = {};
+    const m = e.date ? e.date.slice(5,7) : '00';
+    if (!byYear[y][m]) byYear[y][m] = [];
+    byYear[y][m].push(e);
+  });
   const MONTHS = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   let html = '';
   Object.keys(byYear).sort((a,b)=>b-a).forEach(y => {
@@ -755,95 +879,188 @@ function renderTimeline() {
     Object.keys(byYear[y]).sort((a,b)=>a-b).forEach(m => {
       html += `<div class="month-header">${MONTHS[parseInt(m)-1]||m}</div>`;
       const monthSorted = [...byYear[y][m]].sort((a,b) => (a.date||'') > (b.date||'') ? 1 : -1);
-      monthSorted.forEach(e => { const thumbImg = (e.images && e.images.length > 0) ? e.images[0] : (e.imageData || null); html += `<div class="timeline-item" onclick="openDetail('${e.id}')"><div class="timeline-thumb">${thumbImg ? `<img src="${thumbImg}" style="width:52px;height:52px;border-radius:8px;object-fit:cover">` : '🎵'}</div><div class="timeline-info"><div class="timeline-event">${esc(e.event||'（タイトルなし）')}</div><div class="timeline-meta">${fmtDate(e.date)}${e.venue?' · '+esc(e.venue):''}</div><div class="tags-row" style="margin-top:4px">${(e.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div></div>`; });
+      monthSorted.forEach(e => {
+        const thumbImg = (e.images && e.images.length > 0) ? e.images[0] : (e.imageData || null);
+        html += `<div class="timeline-item" onclick="openDetail('${e.id}')">
+          <div class="timeline-thumb">${thumbImg ? `<img src="${thumbImg}" style="width:52px;height:52px;border-radius:8px;object-fit:cover">` : '🎵'}</div>
+          <div class="timeline-info">
+            <div class="timeline-event">${esc(e.event||'（タイトルなし）')}</div>
+            <div class="timeline-meta">${fmtDate(e.date)}${e.venue?' · '+esc(e.venue):''}</div>
+            <div class="tags-row" style="margin-top:4px">${(e.tags||[]).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>
+          </div>
+        </div>`;
+      });
     });
     html += '</div>';
   });
   container.innerHTML = html;
 }
 
-function renderStats() { const years = [...new Set(entries.map(e=>e.date?e.date.slice(0,4):''))].filter(Boolean); const thisYear = new Date().getFullYear().toString(); const thisYearCount = entries.filter(e=>e.date&&e.date.startsWith(thisYear)).length; const venues = new Set(entries.map(e=>e.venue).filter(Boolean)); const artists = new Set(entries.flatMap(e=>e.tags||[]).filter(Boolean)); const displayEl = document.getElementById('stats-display'); if (displayEl) displayEl.innerHTML = `<div class="stats-grid"><div class="stat-card"><div class="stat-num">${entries.length}</div><div class="stat-label">合計参戦</div></div><div class="stat-card"><div class="stat-num">${thisYearCount}</div><div class="stat-label">${thisYear}年</div></div><div class="stat-card"><div class="stat-num">${venues.size}</div><div class="stat-label">会場数</div></div><div class="stat-card"><div class="stat-num">${artists.size}</div><div class="stat-label">アーティスト</div></div></div>`; }
+// ===== STATS =====
+function renderStats() {
+  const years = [...new Set(entries.map(e=>e.date?e.date.slice(0,4):''))].filter(Boolean);
+  const thisYear = new Date().getFullYear().toString();
+  const thisYearCount = entries.filter(e=>e.date&&e.date.startsWith(thisYear)).length;
+  const venues = new Set(entries.map(e=>e.venue).filter(Boolean));
+  const artists = new Set(entries.flatMap(e=>e.tags||[]).filter(Boolean));
+  document.getElementById('stats-display').innerHTML = `
+    <div class="stats-grid">
+      <div class="stat-card"><div class="stat-num">${entries.length}</div><div class="stat-label">合計参戦</div></div>
+      <div class="stat-card"><div class="stat-num">${thisYearCount}</div><div class="stat-label">${thisYear}年</div></div>
+      <div class="stat-card"><div class="stat-num">${venues.size}</div><div class="stat-label">会場数</div></div>
+      <div class="stat-card"><div class="stat-num">${artists.size}</div><div class="stat-label">アーティスト</div></div>
+    </div>
+  `;
+}
 
 // ===== DETAIL =====
 function openDetail(id) {
-  currentDetailId = id; const e = entries.find(x=>x.id===id); if (!e) return;
-  let imgArray = []; if (e.images && e.images.length > 0) { imgArray = e.images; } else if (e.imageData) { imgArray = [e.imageData]; }
+  currentDetailId = id;
+  const e = entries.find(x=>x.id===id);
+  if (!e) return;
+
+  let imgArray = [];
+  if (e.images && e.images.length > 0) {
+    imgArray = e.images;
+  } else if (e.imageData) {
+    imgArray = [e.imageData];
+  }
+
   const mainImgSrc = imgArray.length > 0 ? imgArray[0] : null;
-  const mainImgHtml = mainImgSrc ? `<img class="detail-img" src="${mainImgSrc}" onclick="this.style.maxHeight=this.style.maxHeight==='none'?'280px':'none'">` : `<div class="detail-img-placeholder">🎵</div>`;
-  let subImagesHtml = ''; if (imgArray.length > 1) { const subImages = imgArray.slice(1); subImagesHtml = `<div class="section-label">関連写真 (${subImages.length}枚)</div><div class="detail-sub-img-stack">${subImages.map(src => `<img src="${src}" onclick="this.style.maxHeight=this.style.maxHeight==='none'?'none':'360px'">`).join('')}</div>`; }
-  document.getElementById('detail-content').innerHTML = `${mainImgHtml}<div class="detail-body"><div class="detail-event">${esc(e.event||'（タイトルなし）')}</div>${e.date?`<div class="detail-field"><span class="detail-field-icon">📅</span><span class="detail-field-val">${fmtDate(e.date)}</span></div>`:''}${e.venue?`<div class="detail-field"><span class="detail-field-icon">📍</span><span class="detail-field-val">${esc(e.venue)}</span></div>`:''}${(e.tags&&e.tags.length)?'<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">' + e.tags.map(t=>'<span class="tag tag-clickable" data-tag="' + esc(t) + '" onclick="closeDetailSheet();handleTagFilter(this);switchTab(\'list\')">' + esc(t) + '</span>').join('') + '</div></div></div>':''}${e.memo?`<div class="section-label">メモ</div><div style="font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${esc(e.memo)}</div>`:''}${e.ocrText?`<div class="section-label">OCR読み取り結果（コピペ用履歴）</div><div class="ocr-result-box">${esc(e.ocrText)}</div>`:''}${subImagesHtml}</div>`;
+  const mainImgHtml = mainImgSrc 
+    ? `<img class="detail-img" src="${mainImgSrc}" onclick="this.style.maxHeight=this.style.maxHeight==='none'?'280px':'none'">` 
+    : `<div class="detail-img-placeholder">🎵</div>`;
+
+  let subImagesHtml = '';
+  if (imgArray.length > 1) {
+    const subImages = imgArray.slice(1);
+    subImagesHtml = `
+      <div class="section-label">関連写真 (${subImages.length}枚)</div>
+      <div class="detail-sub-img-stack">
+        ${subImages.map(src => `<img src="${src}" onclick="this.style.maxHeight=this.style.maxHeight==='none'?'none':'360px'">`).join('')}
+      </div>
+    `;
+  }
+
+  document.getElementById('detail-content').innerHTML = `
+    ${mainImgHtml}
+    <div class="detail-body">
+      <div class="detail-event">${esc(e.event||'（タイトルなし）')}</div>
+      ${e.date?`<div class="detail-field"><span class="detail-field-icon">📅</span><span class="detail-field-val">${fmtDate(e.date)}</span></div>`:''}
+      ${e.venue?`<div class="detail-field"><span class="detail-field-icon">📍</span><span class="detail-field-val">${esc(e.venue)}</span></div>`:''}
+      ${(e.tags&&e.tags.length)?'<div class="detail-field"><span class="detail-field-icon">🎵</span><div><div class="tags-row">' + e.tags.map(t=>'<span class="tag tag-clickable" data-tag="'+esc(t)+'" onclick="closeDetailSheet();handleTagFilter(this);switchTab(\'list\')">' + esc(t) + '</span>').join('') + '</div></div></div>':''}
+      ${e.memo?`<div class="section-label">メモ</div><div style="font-size:14px;color:var(--text2);line-height:1.7;white-space:pre-wrap">${esc(e.memo)}</div>`:''}
+      ${e.ocrText?`<div class="section-label">OCR読み取り結果（コピペ用履歴）</div><div class="ocr-result-box">${esc(e.ocrText)}</div>`:''}
+      ${subImagesHtml}
+    </div>
+  `;
   document.getElementById('detail-sheet').style.display = 'flex';
 }
+
 function closeDetailSheet() { document.getElementById('detail-sheet').style.display = 'none'; }
 function closeDetailOutside(e) { if (e.target.id==='detail-sheet') closeDetailSheet(); }
 function editCurrentDetail() { closeDetailSheet(); openAddSheet(currentDetailId); }
-async function deleteDetailEntryDirect() { if (!currentDetailId) return; if (!confirm('このライブ記録を削除しますか？')) return; const delBtn = document.getElementById('detail-delete-btn'); if (delBtn) { delBtn.disabled = true; delBtn.textContent = '削除中...'; } try { await dbDelete(currentDetailId); entries = await dbAll(); renderList(); renderTimeline(); renderStats(); renderFilterChips(); closeDetailSheet(); if (currentTab !== 'list') switchTab('list'); showToast('🗑 削除しました'); } catch (err) { console.error(err); if (delBtn) { delBtn.disabled = false; delBtn.textContent = '🗑 削除'; } } }
+
+async function deleteDetailEntryDirect() {
+  if (!currentDetailId) return;
+  if (!confirm('このライブ記録を削除しますか？')) return;
+  const delBtn = document.getElementById('detail-delete-btn');
+  if (delBtn) { delBtn.disabled = true; delBtn.textContent = '削除中...'; }
+  try {
+    await dbDelete(currentDetailId);
+    entries = await dbAll();
+    renderList(); renderTimeline(); renderStats(); renderFilterChips();
+    closeDetailSheet();
+    if (currentTab !== 'list') switchTab('list');
+    showToast('🗑 削除しました');
+  } catch (err) {
+    console.error('[deleteDetailEntryDirect] error:', err);
+    showToast('削除に失敗しました');
+    if (delBtn) { delBtn.disabled = false; delBtn.textContent = '🗑 削除'; }
+  }
+}
 
 // ===== ADD/EDIT SHEET =====
 function openAddSheet(editId=null) {
-  currentEditId = editId; currentTags = []; currentImages = []; clearForm();
+  currentEditId = editId;
+  currentTags = [];
+  currentImages = [];
+  clearForm();
+
   if (editId) {
     const e = entries.find(x=>x.id===editId);
     if (e) {
-      document.getElementById('f-event').value = e.event||''; document.getElementById('f-date').value = e.date||''; document.getElementById('f-venue').value = e.venue||''; document.getElementById('f-memo').value = e.memo||''; currentTags = [...(e.tags||[])];
-      if (e.images && e.images.length > 0) { currentImages = [...e.images]; } else if (e.imageData) { currentImages = [e.imageData]; }
+      document.getElementById('f-event').value = e.event||'';
+      document.getElementById('f-date').value = e.date||'';
+      document.getElementById('f-venue').value = e.venue||'';
+      document.getElementById('f-memo').value = e.memo||'';
+      currentTags = [...(e.tags||[])];
+      
+      if (e.images && e.images.length > 0) {
+        currentImages = [...e.images];
+      } else if (e.imageData) {
+        currentImages = [e.imageData];
+      }
       renderFormImagesUI();
     }
-    document.getElementById('sheet-title').textContent = 'ライブを編集'; document.getElementById('delete-btn').style.display = 'block';
+    document.getElementById('sheet-title').textContent = 'ライブを編集';
+    document.getElementById('delete-btn').style.display = 'block';
   } else {
-    document.getElementById('sheet-title').textContent = 'ライブを記録'; document.getElementById('delete-btn').style.display = 'none'; setToday();
-    // 🆕 新規追加時はバッジを 0/10枚 に初期化
-    if (document.getElementById('image-count-badge')) document.getElementById('image-count-badge').textContent = '0 / 10枚';
+    document.getElementById('sheet-title').textContent = 'ライブを記録';
+    document.getElementById('delete-btn').style.display = 'none';
+    setToday();
   }
-  renderTagsUI(); renderTagSuggestions(); _resetSaveBtn();
-  const sheet = document.getElementById('add-sheet'); if (sheet) { sheet.style.display = 'flex'; sheet.classList.remove('hidden'); }
+  renderTagsUI();
+  renderTagSuggestions();
+
+  _resetSaveBtn();
+  const errEl = document.getElementById('form-error-msg');
+  if (errEl) errEl.style.display = 'none';
+
+  _showSheet('add-sheet');
 }
 
-function closeAddSheet() { const sheet = document.getElementById('add-sheet'); if (sheet) { sheet.style.display = 'none'; sheet.classList.add('hidden'); } _resetSaveBtn(); }
+function closeAddSheet() {
+  const sheet = document.getElementById('add-sheet');
+  if (sheet) {
+    sheet.style.display = 'none';
+    sheet.classList.add('hidden');
+  }
+  _resetSaveBtn();
+}
+
+function _showSheet(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.classList.remove('hidden');
+  el.style.display = 'flex';
+}
 function closeSheetOutside(e) { if (e.target.id==='add-sheet') closeAddSheet(); }
 
-// ===== 🆕 v2.3 バリデーション＆枚数バッジ連動ロジック =====
-function updateImageCountAndValidation() {
-  const count = currentImages.length;
-  
-  // 1. バッジの枚数テキスト更新
-  const badge = document.getElementById('image-count-badge');
-  if (badge) {
-    badge.textContent = `${count} / 10枚`;
-    badge.style.color = count > 10 ? 'var(--danger)' : 'var(--accent)';
-  }
-
-  // 2. 10枚超過時のロック＆警告メッセージ処理
-  const warnBox = document.getElementById('photo-limit-warning');
-  const saveBtn = document.getElementById('save-btn');
-  
-  if (count > 10) {
-    if (warnBox) {
-      warnBox.textContent = `⚠️ 写真が10枚の上限を超えています（現在 ${count} 枚）。保存するには、不要な写真を ✕ ボタンで削除して10枚以下にしてください。`;
-      warnBox.style.display = 'block';
-    }
-    if (saveBtn) {
-      saveBtn.disabled = true;
-      saveBtn.style.opacity = '0.4';
-      saveBtn.textContent = '枚数を減らしてください';
-    }
-  } else {
-    if (warnBox) warnBox.style.display = 'none';
-    if (saveBtn) {
-      saveBtn.disabled = false;
-      saveBtn.style.opacity = '1';
-      saveBtn.textContent = currentEditId ? '更新する' : '保存する';
-    }
-  }
+function clearForm() {
+  ['f-event','f-date','f-venue','f-memo'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('form-image-preview-grid').innerHTML = '';
+  document.getElementById('ocr-result-preview').style.display = 'none';
+  document.getElementById('ocr-lines-list').textContent = '';
+  document.getElementById('img-input').value = '';
 }
 
-// ===== IMAGE SELECT & COMPRESS =====
+// ===== IMAGE MULTI-SELECT & COMPRESS =====
 async function handleImageSelect(event) {
   const files = Array.from(event.target.files);
   if (!files.length) return;
 
+  if (currentImages.length + files.length > 10) {
+    showToast('⚠️ 写真は合計10枚までしか登録できません');
+    event.target.value = '';
+    return;
+  }
+
   const overlay = document.getElementById('ocr-overlay');
-  if (overlay) { overlay.style.display = 'flex'; document.getElementById('ocr-status').textContent = '画像を最適化中...'; }
+  if (overlay) {
+    overlay.style.display = 'flex';
+    document.getElementById('ocr-status').textContent = '画像を最適化中...';
+  }
 
   let shouldTriggerOcr = (currentImages.length === 0);
   let firstPhotoBase64 = null;
@@ -852,155 +1069,774 @@ async function handleImageSelect(event) {
     try {
       const compressedData = await resizeAndCompressImage(file);
       currentImages.push(compressedData);
-      if (shouldTriggerOcr && !firstPhotoBase64) { firstPhotoBase64 = compressedData; }
-    } catch (err) { console.error(err); }
+      if (shouldTriggerOcr && !firstPhotoBase64) {
+        firstPhotoBase64 = compressedData;
+      }
+    } catch (err) {
+      console.error('Compression failed:', err);
+    }
   }
 
   renderFormImagesUI();
   event.target.value = '';
 
-  if (shouldTriggerOcr && firstPhotoBase64) { await runOCR(firstPhotoBase64); }
-  else { if (overlay) overlay.style.display = 'none'; }
+  if (shouldTriggerOcr && firstPhotoBase64) {
+    await runOCR(firstPhotoBase64);
+  } else {
+    if (overlay) overlay.style.display = 'none';
+  }
 }
 
 function resizeAndCompressImage(file) {
   return new Promise((resolve, reject) => {
-    const reader = new FileReader(); reader.onload = e => { const img = new Image(); img.onload = () => { const canvas = document.createElement('canvas'); let width = img.width; let height = img.height; const MAX_WIDTH = 1024; if (width > MAX_WIDTH) { height = Math.round((height * MAX_WIDTH) / width); width = MAX_WIDTH; } canvas.width = width; canvas.height = height; const ctx = canvas.getContext('2d'); ctx.drawImage(img, 0, 0, width, height); resolve(canvas.toDataURL('image/jpeg', 0.75)); }; img.onerror = reject; img.src = e.target.result; }; reader.onerror = reject; reader.readAsDataURL(file);
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+        const MAX_WIDTH = 1024;
+
+        if (width > MAX_WIDTH) {
+          height = Math.round((height * MAX_WIDTH) / width);
+          width = MAX_WIDTH;
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.75);
+        resolve(compressedBase64);
+      };
+      img.onerror = reject;
+      img.src = e.target.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
   });
 }
 
 function renderFormImagesUI() {
-  const grid = document.getElementById('form-image-preview-grid'); if (!grid) return;
-  grid.innerHTML = currentImages.map((imgSrc, index) => `<div class="form-img-box"><img src="${imgSrc}"><button type="button" class="form-img-rm" onclick="removeFormImage(${index})">✕</button></div>`).join('');
+  const grid = document.getElementById('form-image-preview-grid');
+  if (!grid) return;
   
-  // 枚数が変わるたびにバリデーションを走らせる
-  updateImageCountAndValidation();
+  grid.innerHTML = currentImages.map((imgSrc, index) => `
+    <div class="form-img-box">
+      <img src="${imgSrc}">
+      <button class="form-img-rm" onclick="removeFormImage(${index})">✕</button>
+    </div>
+  `).join('');
 }
 
-function removeFormImage(index) { currentImages.splice(index, 1); renderFormImagesUI(); }
+function removeFormImage(index) {
+  currentImages.splice(index, 1);
+  renderFormImagesUI();
+}
 
-// ===== OCR (日本語+英語 箇条書き) =====
+// ===== OCR (日本語+英語 箇条書きコピペ版) =====
 async function runOCR(imageData) {
-  const overlay = document.getElementById('ocr-overlay'); if (overlay) overlay.style.display = 'flex'; document.getElementById('ocr-status').textContent = 'Tesseract.js 読み込み中...';
+  const overlay = document.getElementById('ocr-overlay');
+  if (overlay) overlay.style.display = 'flex';
+  document.getElementById('ocr-status').textContent = 'Tesseract.js 読み込み中...';
+
   try {
-    if (!window.Tesseract) { await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'); }
+    if (!window.Tesseract) {
+      await loadScript('https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js');
+    }
     document.getElementById('ocr-status').textContent = 'OCR処理中... (日本語+英語)';
-    const result = await Tesseract.recognize(imageData, 'jpn+eng', { logger: m => { if (m.status === 'recognizing text') { document.getElementById('ocr-status').textContent = `認識中 ${Math.round(m.progress*100)}%`; } } });
-    const text = result.data.text; window._ocrFullText = text;
-    const listEl = document.getElementById('ocr-lines-list'); const previewEl = document.getElementById('ocr-result-preview');
+
+    const result = await Tesseract.recognize(imageData, 'jpn+eng', {
+      logger: m => {
+        if (m.status === 'recognizing text') {
+          document.getElementById('ocr-status').textContent = `認識中 ${Math.round(m.progress*100)}%`;
+        }
+      }
+    });
+
+    const text = result.data.text;
+    window._ocrFullText = text;
+
+    const listEl = document.getElementById('ocr-lines-list');
+    const previewEl = document.getElementById('ocr-result-preview');
+    
     if (listEl && previewEl) {
       const lines = text.split('\n').map(l => l.trim()).filter(l => l.length > 1);
-      if (lines.length > 0) { listEl.textContent = lines.map(l => `・ ${l}`).join('\n'); previewEl.style.display = 'block'; showToast(`🔍 ${lines.length} 行の文字を読み取りました`); }
-      else { listEl.textContent = '文字が検出されませんでした。'; previewEl.style.display = 'block'; }
+
+      if (lines.length > 0) {
+        listEl.textContent = lines.map(l => `・ ${l}`).join('\n');
+        previewEl.style.display = 'block';
+        showToast(`🔍 ${lines.length} 行の文字を読み取りました`);
+      } else {
+        listEl.textContent = '文字が検出されませんでした。';
+        previewEl.style.display = 'block';
+      }
     }
-  } catch(err) { showToast('OCR失敗 — 手動で入力してください'); } finally { if (overlay) overlay.style.display = 'none'; }
+  } catch(err) {
+    console.error('OCR error:', err);
+    showToast('OCR失敗 — 手動で入力してください');
+  } finally {
+    if (overlay) overlay.style.display = 'none';
+  }
 }
 
 // ===== TAGS =====
-function splitTagString(str) { return str.split(/[,，、]/).map(s => s.trim()).filter(Boolean); }
-function addTagsUnique(arr) { let added = false; arr.forEach(t => { if (t && !currentTags.some(c => c.trim().toLowerCase() === t.trim().toLowerCase())) { currentTags.push(t.trim()); added = true; } }); if (added) { renderTagsUI(); renderTagSuggestions(); } }
-function handleTagInput(ev) { const inp = document.getElementById('tags-input'); const val = inp.value; if (ev.key === ',' || ev.key === '，' || ev.key === '、') { ev.preventDefault(); addTagsUnique(splitTagString(val)); inp.value = ''; renderTagSuggestions(); return; } if (ev.key === 'Enter') { ev.preventDefault(); addTagsUnique(splitTagString(val)); inp.value = ''; renderTagSuggestions(); return; } if (ev.key === 'Backspace' && val === '' && currentTags.length > 0) { currentTags.pop(); renderTagsUI(); renderTagSuggestions(); } }
-function handleTagPaste(ev) { ev.preventDefault(); const pasted = (ev.clipboardData || window.clipboardData).getData('text'); const parts = splitTagString(pasted); if (parts.length > 0) { addTagsUnique(parts); document.getElementById('tags-input').value = ''; renderTagSuggestions(); } }
-function renderTagsUI() { const wrap = document.getElementById('tags-wrap'); const inp = document.getElementById('tags-input'); while (wrap.firstChild && wrap.firstChild !== inp) wrap.removeChild(wrap.firstChild); currentTags.forEach((t, i) => { const span = document.createElement('span'); span.className = 'tag'; span.style.cssText = 'display:inline-flex;align-items:center;gap:4px;cursor:default;'; span.innerHTML = `${esc(t)}<span class="tag-rm" onclick="removeTag(${i})" style="cursor:pointer;font-size:11px;opacity:0.7;padding:0 2px;">✕</span>`; wrap.insertBefore(span, inp); }); }
-function removeTag(i) { currentTags.splice(i, 1); renderTagsUI(); renderTagSuggestions(); }
-function filterTagSuggestions() { renderTagSuggestions(); }
-function renderTagSuggestions() { const inp = document.getElementById('tags-input'); const typedVal = inp ? inp.value.trim().toLowerCase() : ''; const currentNorm = currentTags.map(t => t.trim().toLowerCase()); let allTags = [...new Set(entries.flatMap(e => e.tags||[]))].filter(t => !currentNorm.includes(t.trim().toLowerCase())); if (typedVal !== '') { allTags = allTags.filter(t => t.toLowerCase().includes(typedVal)); } allTags.sort(); const sug = document.getElementById('tag-suggestions'); if (!sug) return; if (!allTags.length) { sug.style.display = 'none'; return; } sug.style.display = 'flex'; sug.innerHTML = allTags.slice(0, 10).map(t => '<span class="tag tag-clickable" data-tag="' + esc(t) + '" onclick="addTagSug(this.dataset.tag)">' + esc(t) + '</span>').join(''); }
-function addTagSug(t) { addTagsUnique([t]); const inp = document.getElementById('tags-input'); if (inp) { inp.value = ''; inp.focus(); } renderTagSuggestions(); }
+function splitTagString(str) {
+  return str.split(/[,，、]/).map(s => s.trim()).filter(Boolean);
+}
+
+function addTagsUnique(arr) {
+  let added = false;
+  arr.forEach(t => {
+    if (t && !currentTags.some(c => c.trim().toLowerCase() === t.trim().toLowerCase())) {
+      currentTags.push(t.trim());
+      added = true;
+    }
+  });
+  if (added) {
+    renderTagsUI();
+    renderTagSuggestions();
+  }
+}
+
+function handleTagInput(ev) {
+  const inp = document.getElementById('tags-input');
+  const val = inp.value;
+
+  if (ev.key === ',' || ev.key === '，' || ev.key === '、') {
+    ev.preventDefault();
+    const parts = splitTagString(val);
+    addTagsUnique(parts);
+    inp.value = '';
+    renderTagSuggestions();
+    return;
+  }
+
+  if (ev.key === 'Enter') {
+    ev.preventDefault();
+    const parts = splitTagString(val);
+    addTagsUnique(parts);
+    inp.value = '';
+    renderTagSuggestions();
+    return;
+  }
+
+  if (ev.key === 'Backspace' && val === '' && currentTags.length > 0) {
+    currentTags.pop();
+    renderTagsUI();
+    renderTagSuggestions();
+  }
+}
+
+function handleTagPaste(ev) {
+  ev.preventDefault();
+  const pasted = (ev.clipboardData || window.clipboardData).getData('text');
+  const parts = splitTagString(pasted);
+  if (parts.length > 0) {
+    addTagsUnique(parts);
+    document.getElementById('tags-input').value = '';
+    renderTagSuggestions();
+  }
+}
+
+function renderTagsUI() {
+  const wrap = document.getElementById('tags-wrap');
+  const inp  = document.getElementById('tags-input');
+  while (wrap.firstChild && wrap.firstChild !== inp) wrap.removeChild(wrap.firstChild);
+  currentTags.forEach((t, i) => {
+    const span = document.createElement('span');
+    span.className = 'tag';
+    span.style.cssText = 'display:inline-flex;align-items:center;gap:4px;cursor:default;';
+    span.innerHTML = `${esc(t)}<span class="tag-rm" onclick="removeTag(${i})" style="cursor:pointer;font-size:11px;opacity:0.7;padding:0 2px;">✕</span>`;
+    wrap.insertBefore(span, inp);
+  });
+}
+
+function removeTag(i) {
+  currentTags.splice(i, 1);
+  renderTagsUI();
+  renderTagSuggestions();
+}
+
+function filterTagSuggestions() {
+  renderTagSuggestions();
+}
+
+function renderTagSuggestions() {
+  const inp = document.getElementById('tags-input');
+  const typedVal = inp ? inp.value.trim().toLowerCase() : '';
+
+  const currentNorm = currentTags.map(t => t.trim().toLowerCase());
+  let allTags = [...new Set(entries.flatMap(e => e.tags||[]))].filter(t => !currentNorm.includes(t.trim().toLowerCase()));
+
+  if (typedVal !== '') {
+    allTags = allTags.filter(t => t.toLowerCase().includes(typedVal));
+  }
+  allTags.sort();
+
+  const sug = document.getElementById('tag-suggestions');
+  if (!sug) return;
+  if (!allTags.length) { sug.style.display = 'none'; return; }
+  sug.style.display = 'flex';
+  sug.innerHTML = allTags.slice(0, 10).map(t =>
+    '<span class="tag tag-clickable" data-tag="' + esc(t) + '" onclick="addTagSug(this.dataset.tag)">' + esc(t) + '</span>'
+  ).join('');
+}
+
+function addTagSug(t) {
+  addTagsUnique([t]);
+  const inp = document.getElementById('tags-input');
+  if (inp) { inp.value = ''; inp.focus(); }
+  renderTagSuggestions();
+}
 
 // ===== SAVE =====
-let isSaving = false;
-function _resetSaveBtn() { isSaving = false; const saveBtn = document.getElementById('save-btn'); const deleteBtn = document.getElementById('delete-btn'); if (saveBtn) { saveBtn.disabled = false; saveBtn.style.opacity = '1'; saveBtn.textContent = currentEditId ? '更新する' : '保存する'; } if (deleteBtn) deleteBtn.disabled = false; }
+function waitFrame() {
+  return new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+}
 
-function clearForm() {
-  ['f-event','f-date','f-venue','f-memo'].forEach(id => { const el = document.getElementById(id); if (el) el.value=''; });
-  const grid = document.getElementById('form-image-preview-grid'); if (grid) grid.innerHTML = '';
-  const ocrPrev = document.getElementById('ocr-result-preview'); if (ocrPrev) ocrPrev.style.display = 'none';
-  const ocrList = document.getElementById('ocr-lines-list'); if (ocrList) ocrList.textContent = '';
-  const imgInp = document.getElementById('img-input'); if (imgInp) imgInp.value = '';
+let isSaving = false;
+
+function _resetSaveBtn() {
+  isSaving = false;
+  const saveBtn    = document.getElementById('save-btn');
+  const deleteBtn = document.getElementById('delete-btn');
+  if (saveBtn) {
+    saveBtn.disabled  = false;
+    saveBtn.textContent = currentEditId ? '更新する' : '保存する';
+  }
+  if (deleteBtn) deleteBtn.disabled = false;
 }
 
 async function saveEntry() {
   if (isSaving) return;
-  if (currentImages.length > 10) { showToast('⚠️ 写真が10枚を超えています。削除して減らしてください。'); return; }
 
-  const eventName = document.getElementById('f-event').value.trim(); const date = document.getElementById('f-date').value.trim(); const venue = document.getElementById('f-venue').value.trim(); const memo = document.getElementById('f-memo').value.trim();
-  const pendingTag = document.getElementById('tags-input').value.trim(); if (pendingTag) { addTagsUnique(splitTagString(pendingTag)); document.getElementById('tags-input').value = ''; }
-  if (!eventName && !date) { showFormError('イベント名または日付を入力してください'); return; }
+  const eventName = document.getElementById('f-event').value.trim();
+  const date      = document.getElementById('f-date').value.trim();
+  const venue     = document.getElementById('f-venue').value.trim();
+  const memo      = document.getElementById('f-memo').value.trim();
 
-  isSaving = true; const saveBtn = document.getElementById('save-btn'); if (saveBtn) { saveBtn.disabled = true; saveBtn.innerHTML = '保存中...'; }
+  const pendingTag = document.getElementById('tags-input').value.trim();
+  if (pendingTag) {
+    addTagsUnique(splitTagString(pendingTag));
+    document.getElementById('tags-input').value = '';
+  }
+
+  if (!eventName && !date) {
+    showFormError('イベント名または日付を入力してください');
+    return;
+  }
+
+  isSaving = true;
+  const saveBtn    = document.getElementById('save-btn');
+  const deleteBtn = document.getElementById('delete-btn');
+  if (saveBtn) {
+    saveBtn.disabled = true;
+    saveBtn.innerHTML = '<span style="display:inline-flex;align-items:center;gap:8px;justify-content:center;"><span style="width:16px;height:16px;border:2px solid rgba(255,255,255,0.35);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;display:inline-block;flex-shrink:0;"></span>保存中...</span>';
+  }
+  if (deleteBtn) deleteBtn.disabled = true;
+
   await waitFrame();
+
   try {
-    const isEdit = !!currentEditId; const existing = isEdit ? entries.find(e => e.id === currentEditId) : null; const entryId = isEdit ? currentEditId : ('live_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
-    const entry = { id: entryId, event: eventName, date, venue, memo, tags: [...currentTags], images: [...currentImages], imageData: currentImages.length > 0 ? currentImages[0] : null, ocrText: window._ocrFullText || (existing ? existing.ocrText || '' : ''), createdAt: existing ? (existing.createdAt || new Date().toISOString()) : new Date().toISOString(), updatedAt: new Date().toISOString() };
-    await dbPut(entry); entries = await dbAll(); window._ocrFullText = '';
-    renderList(); renderTimeline(); renderStats(); renderFilterChips(); _resetSaveBtn(); currentEditId = null;
-    closeAddSheet(); switchTab('list'); showToast(isEdit ? '✅ ライブを更新しました' : '✅ ライブを保存しました');
-  } catch (err) { _resetSaveBtn(); showFormError('保存に失敗しました'); }
+    const isEdit   = !!currentEditId;
+    const existing = isEdit ? entries.find(e => e.id === currentEditId) : null;
+    const entryId  = isEdit ? currentEditId : ('live_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7));
+
+    const entry = {
+      id:        entryId,
+      event:     eventName,
+      date,
+      venue,
+      memo,
+      tags:      [...currentTags],
+      images:    [...currentImages],
+      imageData: currentImages.length > 0 ? currentImages[0] : null,
+      ocrText:   window._ocrFullText || (existing ? existing.ocrText || '' : ''),
+      createdAt: existing ? (existing.createdAt || new Date().toISOString()) : new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+
+    await dbPut(entry);
+    entries = await dbAll();
+    window._ocrFullText = '';
+
+    renderList(); renderTimeline(); renderStats(); renderFilterChips();
+    _resetSaveBtn();
+    currentEditId = null;
+
+    const sheet = document.getElementById('add-sheet');
+    if (sheet) {
+      sheet.style.display = 'none';
+      sheet.classList.add('hidden');
+    }
+
+    currentTab = 'list';
+    ['list','timeline','settings'].forEach(t => {
+      const page = document.getElementById('page-' + t);
+      const nav  = document.getElementById('nav-'   + t);
+      if (page) page.classList.toggle('active', t === 'list');
+      if (nav)  nav.classList.toggle('active',  t === 'list');
+    });
+    document.getElementById('fab-btn').style.display = 'flex';
+
+    showToast(isEdit ? '✅ ライブを更新しました' : '✅ ライブを保存しました');
+
+  } catch (err) {
+    console.error('[saveEntry] ERROR:', err);
+    _resetSaveBtn();
+    showFormError('保存に失敗しました。もう一度お試しください。');
+  }
 }
 
-function showFormError(msg) { let el = document.getElementById('form-error-msg'); if (!el) { el = document.createElement('div'); el.id = 'form-error-msg'; el.style.cssText = 'background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.4);border-radius:8px;padding:10px 14px;font-size:13px;color:#f87171;margin-top:10px;'; const saveBtn = document.getElementById('save-btn'); if (saveBtn && saveBtn.parentNode) saveBtn.parentNode.insertAdjacentElement('afterend', el); } el.textContent = '⚠️ ' + msg; el.style.display = 'block'; setTimeout(() => { if (el) el.style.display = 'none'; }, 3000); }
-async function deleteCurrentEntry() { if (!currentEditId) return; if (!confirm('このライブ記録を削除しますか？')) return; try { await dbDelete(currentEditId); entries = await dbAll(); renderList(); renderTimeline(); renderStats(); renderFilterChips(); closeAddSheet(); switchTab('list'); showToast('🗑 削除しました'); } catch (err) { console.error(err); } }
+function showFormError(msg) {
+  let el = document.getElementById('form-error-msg');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'form-error-msg';
+    el.style.cssText = 'background:rgba(248,113,113,0.12);border:1px solid rgba(248,113,113,0.4);border-radius:8px;padding:10px 14px;font-size:13px;color:#f87171;margin-top:10px;';
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn && saveBtn.parentNode) saveBtn.parentNode.insertAdjacentElement('afterend', el);
+  }
+  el.textContent = '⚠️ ' + msg;
+  el.style.display = 'block';
+  setTimeout(() => { if (el) el.style.display = 'none'; }, 3000);
+}
+
+async function deleteCurrentEntry() {
+  if (!currentEditId) return;
+  if (!confirm('このライブ記録を削除しますか？')) return;
+  const deleteBtn = document.getElementById('delete-btn');
+  if (deleteBtn) { deleteBtn.disabled = true; deleteBtn.textContent = '削除中...'; }
+  try {
+    await dbDelete(currentEditId);
+    entries = await dbAll();
+    renderList(); renderTimeline(); renderStats(); renderFilterChips();
+    closeAddSheet();
+    if (currentTab !== 'list') switchTab('list');
+    showToast('🗑 削除しました');
+  } catch (err) {
+    console.error('[deleteEntry] error:', err);
+    showToast('削除に失敗しました');
+    if (deleteBtn) { deleteBtn.disabled = false; deleteBtn.textContent = '🗑 削除'; }
+  }
+}
 
 // ===== BACKUP SYSTEM =====
-const APP_VERSION = "2.3";
+const APP_VERSION = "2.2"; // 修正点：バージョンを2.2へアップ
 const SCHEMA_VERSION = 2;
 const BACKUP_HISTORY_KEY = "livelog_backup_history";
-let exportIncludeImages = true; let pendingImportData = null;
-function getBackupHistory() { try { return JSON.parse(localStorage.getItem(BACKUP_HISTORY_KEY) || '[]'); } catch { return []; } }
-function addBackupHistory(record) { const hist = getBackupHistory(); hist.unshift(record); localStorage.setItem(BACKUP_HISTORY_KEY, JSON.stringify(hist.slice(0, 10))); }
+let exportIncludeImages = true;
+let pendingImportData = null;
+
+function getBackupHistory() {
+  try { return JSON.parse(localStorage.getItem(BACKUP_HISTORY_KEY) || '[]'); }
+  catch { return []; }
+}
+function addBackupHistory(record) {
+  const hist = getBackupHistory();
+  hist.unshift(record);
+  localStorage.setItem(BACKUP_HISTORY_KEY, JSON.stringify(hist.slice(0, 10)));
+}
 
 function refreshSettingsLabels() {
-  const verEl = document.getElementById('app-version-label'); if (verEl) verEl.textContent = `v${APP_VERSION} — スキーマ v${SCHEMA_VERSION}`;
-  const hist = getBackupHistory(); const lastEl = document.getElementById('last-export-label'); if (lastEl) { if (hist.length > 0) { lastEl.textContent = `最終: ${hist[0].dateLocal}（${hist[0].count}件）`; } else { lastEl.textContent = '全データをJSONファイルにまとめて保存'; } }
-  const wrap = document.getElementById('backup-history-wrap'); const list = document.getElementById('backup-history-list'); if (!wrap || !list) return; if (hist.length === 0) { wrap.style.display = 'none'; return; } wrap.style.display = 'block'; list.innerHTML = hist.slice(0, 3).map(h => `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;"><div><div style="font-size:13px;font-weight:500;">${esc(h.dateLocal)}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">${h.count}件 · ${h.sizeKB}KB${h.memo ? ' · ' + esc(h.memo) : ''}</div></div><span style="font-size:11px;color:var(--text3);">${h.withImages ? '📷' : '📄'}</span></div>`).join('');
+  const verEl = document.getElementById('app-version-label');
+  if (verEl) verEl.textContent = `v${APP_VERSION} — スキーマ v${SCHEMA_VERSION}`;
+
+  const hist = getBackupHistory();
+  const lastEl = document.getElementById('last-export-label');
+  if (lastEl) {
+    if (hist.length > 0) {
+      lastEl.textContent = `最終: ${hist[0].dateLocal}（${hist[0].count}件）`;
+    } else {
+      lastEl.textContent = '画像を含む全データをJSONファイルにまとめて保存';
+    }
+  }
+
+  const wrap = document.getElementById('backup-history-wrap');
+  const list = document.getElementById('backup-history-list');
+  if (!wrap || !list) return;
+  if (hist.length === 0) { wrap.style.display = 'none'; return; }
+  wrap.style.display = 'block';
+  list.innerHTML = hist.slice(0, 3).map(h => `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;">
+      <div>
+        <div style="font-size:13px;font-weight:500;">${esc(h.dateLocal)}</div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">${h.count}件 · ${h.sizeKB}KB${h.memo ? ' · ' + esc(h.memo) : ''}</div>
+      </div>
+      <span style="font-size:11px;color:var(--text3);">${h.withImages ? '📷' : '📄'}</span>
+    </div>
+  `).join('');
   calcDataSize();
 }
 
-async function calcDataSize() { const el = document.getElementById('data-size-label'); if (!el) return; try { const all = await dbAll(); const json = JSON.stringify(all); const kb = Math.round(json.length / 1024); let totalImgCount = 0; all.forEach(e => { if (e.images) totalImgCount += e.images.length; else if (e.imageData) totalImgCount += 1; }); el.textContent = `${all.length}件 · 約${kb}KB · 画像${totalImgCount}枚`; } catch { el.textContent = '計算できませんでした'; } }
-async function openExportSheet() { const all = await dbAll(); let totalImgCount = 0; all.forEach(e => { if (e.images) totalImgCount += e.images.length; else if (e.imageData) totalImgCount += 1; }); document.getElementById('export-filename').value = `LiveLog.json`; document.getElementById('export-memo').value = ''; document.getElementById('export-counts').innerHTML = `<div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--accent);">${all.length}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">ライブ記録</div></div><div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;"><div style="font-size:22px;font-weight:700;color:var(--accent);">${totalImgCount}</div><div style="font-size:11px;color:var(--text3);margin-top:2px;">総画像数</div></div>`; exportIncludeImages = true; document.getElementById('toggle-track').style.background = 'var(--accent2)'; document.getElementById('toggle-thumb').style.transform = 'translateX(18px)'; updateExportSizeEst(all); document.getElementById('export-progress-wrap').style.display = 'none'; document.getElementById('export-btn').disabled = false; document.getElementById('export-sheet').style.display = 'flex'; }
-async function updateExportSizeEst(allData) { let size = 0; if (exportIncludeImages) { size = JSON.stringify(allData).length; } else { const stripped = allData.map(e => { const c = {...e}; delete c.images; delete c.imageData; return c; }); size = JSON.stringify(stripped).length; } const kb = Math.round(size / 1024); const el = document.getElementById('export-size-est'); if (el) el.textContent = `推定ファイルサイズ: 約 ${kb.toLocaleString()} KB`; }
-function toggleExportImages() { exportIncludeImages = !exportIncludeImages; const track = document.getElementById('toggle-track'); const thumb = document.getElementById('toggle-thumb'); track.style.background = exportIncludeImages ? 'var(--accent2)' : 'var(--bg4)'; thumb.style.transform = exportIncludeImages ? 'translateX(18px)' : 'translateX(0)'; dbAll().then(all => updateExportSizeEst(all)); }
+async function calcDataSize() {
+  const el = document.getElementById('data-size-label');
+  if (!el) return;
+  try {
+    const all = await dbAll();
+    const json = JSON.stringify(all);
+    const kb = Math.round(json.length / 1024);
+    
+    let totalImgCount = 0;
+    all.forEach(e => {
+      if (e.images) totalImgCount += e.images.length;
+      else if (e.imageData) totalImgCount += 1;
+    });
+    el.textContent = `${all.length}件 · 約${kb}KB · 画像${totalImgCount}枚`;
+  } catch { el.textContent = '計算できませんでした'; }
+}
+
+async function openExportSheet() {
+  const all = await dbAll();
+  let totalImgCount = 0;
+  all.forEach(e => {
+    if (e.images) totalImgCount += e.images.length;
+    else if (e.imageData) totalImgCount += 1;
+  });
+
+  // 👇 修正ポイント②：ファイル名の初期入力を「LiveLog.json」に固定
+  document.getElementById('export-filename').value = `LiveLog.json`;
+  document.getElementById('export-memo').value = '';
+
+  document.getElementById('export-counts').innerHTML = `
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+      <div style="font-size:22px;font-weight:700;color:var(--accent);">${all.length}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">ライブ記録</div>
+    </div>
+    <div style="background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+      <div style="font-size:22px;font-weight:700;color:var(--accent);">${totalImgCount}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">総画像数</div>
+    </div>
+  `;
+
+  exportIncludeImages = true;
+  document.getElementById('toggle-track').style.background = 'var(--accent2)';
+  document.getElementById('toggle-thumb').style.transform = 'translateX(18px)';
+
+  updateExportSizeEst(all);
+  document.getElementById('export-progress-wrap').style.display = 'none';
+  document.getElementById('export-btn').disabled = false;
+  document.getElementById('export-btn').textContent = '📤 バックアップを作成する';
+  document.getElementById('export-sheet').style.display = 'flex';
+}
+
+async function updateExportSizeEst(allData) {
+  let size = 0;
+  if (exportIncludeImages) {
+    size = JSON.stringify(allData).length;
+  } else {
+    const stripped = allData.map(e => { const c = {...e}; delete c.images; delete c.imageData; return c; });
+    size = JSON.stringify(stripped).length;
+  }
+  const kb = Math.round(size / 1024);
+  const el = document.getElementById('export-size-est');
+  if (el) el.textContent = `推定ファイルサイズ: 約 ${kb.toLocaleString()} KB`;
+}
+
+function toggleExportImages() {
+  exportIncludeImages = !exportIncludeImages;
+  const track = document.getElementById('toggle-track');
+  const thumb = document.getElementById('toggle-thumb');
+  track.style.background = exportIncludeImages ? 'var(--accent2)' : 'var(--bg4)';
+  thumb.style.transform = exportIncludeImages ? 'translateX(18px)' : 'translateX(0)';
+  dbAll().then(all => updateExportSizeEst(all));
+}
+
 function closeExportSheet() { document.getElementById('export-sheet').style.display = 'none'; }
 
 async function executeExport() {
-  const btn = document.getElementById('export-btn'); const progressWrap = document.getElementById('export-progress-wrap'); const progressBar = document.getElementById('export-progress-bar'); const progressLabel = document.getElementById('export-progress-label'); const progressPct = document.getElementById('export-progress-pct');
-  btn.disabled = true; progressWrap.style.display = 'block';
+  const btn = document.getElementById('export-btn');
+  const progressWrap = document.getElementById('export-progress-wrap');
+  const progressBar = document.getElementById('export-progress-bar');
+  const progressLabel = document.getElementById('export-progress-label');
+  const progressPct = document.getElementById('export-progress-pct');
+
+  btn.disabled = true;
+  progressWrap.style.display = 'block';
+
+  // 👇 修正ポイント①：共有シート（保存確認）が立ち上がる直前に、心理的違和感を打ち消すナビゲーション用案内をトーストで出す
   showToast('🔄 システム連携中：このあと表示される確認画面で『保存』を押して、端末にバックアップを保管してください');
+
+  // トーストをユーザーが一瞬目視できるように、わずかに350ミリ秒だけ処理を遅延させてから生成を走らせるUX工夫
   await new Promise(r => setTimeout(r, 350));
+
   try {
-    const all = await dbAll(); const memo = document.getElementById('export-memo').value.trim(); const now = new Date(); const localStr = now.toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' }); const processed = [];
-    for (let i = 0; i < all.length; i++) { const entry = {...all[i]}; if (!exportIncludeImages) { delete entry.images; delete entry.imageData; } processed.push(entry); const pct = Math.round((i + 1) / all.length * 80); progressBar.style.width = pct + '%'; progressPct.textContent = pct + '%'; progressLabel.textContent = `データ変換中 ${i+1}/${all.length}件...`; if (i % 5 === 0) await new Promise(r => setTimeout(r, 0)); }
-    progressLabel.textContent = 'バックアップファイルを生成中...'; progressBar.style.width = '90%'; await new Promise(r => setTimeout(r, 0));
+    const all = await dbAll();
+    const memo = document.getElementById('export-memo').value.trim();
+    const now = new Date();
+    const localStr = now.toLocaleString('ja-JP', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+
+    const processed = [];
+    for (let i = 0; i < all.length; i++) {
+      const entry = {...all[i]};
+      if (!exportIncludeImages) {
+        delete entry.images;
+        delete entry.imageData;
+      }
+      processed.push(entry);
+
+      const pct = Math.round((i + 1) / all.length * 80);
+      progressBar.style.width = pct + '%';
+      progressPct.textContent = pct + '%';
+      progressLabel.textContent = `データ変換中 ${i+1}/${all.length}件...`;
+      if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
+    }
+
+    progressLabel.textContent = 'バックアップファイルを生成中...';
+    progressBar.style.width = '90%';
+    await new Promise(r => setTimeout(r, 0));
+
     const totalSizeKB = Math.round(JSON.stringify(processed).length / 1024);
-    const backup = { schemaVersion: SCHEMA_VERSION, appVersion: APP_VERSION, exportedAt: now.toISOString(), exportedAtLocal: localStr, memo: memo || '', stats: { total: all.length, totalSizeKB, includesImages: exportIncludeImages }, entries: processed };
-    const json = JSON.stringify(backup, null, 2); const blob = new Blob([json], { type: 'application/json;charset=utf-8' }); const url = URL.createObjectURL(blob); const filename = document.getElementById('export-filename').value.trim() || 'LiveLog.json';
-    progressBar.style.width = '100%'; progressPct.textContent = '100%'; progressLabel.textContent = 'システム確認画面を呼び出し中...';
-    const a = document.createElement('a'); a.href = url; a.download = filename.endsWith('.json') ? filename : filename + '.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(() => URL.revokeObjectURL(url), 1000);
-    addBackupHistory({ dateLocal: localStr, timestamp: Date.now(), count: all.length, sizeKB: totalSizeKB, withImages: exportIncludeImages, memo, filename: a.download });
-    await new Promise(r => setTimeout(r, 600)); closeExportSheet(); refreshSettingsLabels();
-    const reminderBar = document.getElementById('backup-reminder'); if (reminderBar) { reminderBar.style.display = 'none'; document.body.classList.remove('has-reminder'); }
+
+    const backup = {
+      schemaVersion: SCHEMA_VERSION,
+      appVersion: APP_VERSION,
+      exportedAt: now.toISOString(),
+      exportedAtLocal: localStr,
+      memo: memo || '',
+      stats: {
+        total: all.length,
+        totalSizeKB,
+        includesImages: exportIncludeImages,
+      },
+      entries: processed,
+    };
+
+    const json = JSON.stringify(backup, null, 2);
+    const blob = new Blob([json], { type: 'application/json;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    
+    // 入力されたファイル名（空ならLiveLog.json）を適用
+    const filename = document.getElementById('export-filename').value.trim() || 'LiveLog.json';
+
+    progressBar.style.width = '100%';
+    progressPct.textContent = '100%';
+    progressLabel.textContent = 'システム確認画面を呼び出し中...';
+
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename.endsWith('.json') ? filename : filename + '.json';
+    document.body.appendChild(a);
+    a.click(); // ここでiOSおなじみの「ダウンロードしますか？」が立ち上がります
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+    // 履歴に現在のタイムスタンプ(ミリ秒)をカチッと組み込んで記憶
+    addBackupHistory({
+      dateLocal: localStr,
+      timestamp: Date.now(),
+      count: all.length,
+      sizeKB: totalSizeKB,
+      withImages: exportIncludeImages,
+      memo,
+      filename: a.download,
+    });
+
+    await new Promise(r => setTimeout(r, 600));
+    closeExportSheet();
+    refreshSettingsLabels();
+    
+    // バックアップが今完了したので、1ヶ月警告バーを即座に非表示にする
+    const reminderBar = document.getElementById('backup-reminder');
+    if (reminderBar) {
+      reminderBar.style.display = 'none';
+      document.body.classList.remove('has-reminder');
+    }
+
     showToast(`📤 バックアップ処理を開始しました`);
-  } catch(err) { showToast('バックアップの生成に失敗しました'); btn.disabled = false; progressWrap.style.display = 'none'; }
+
+  } catch(err) {
+    console.error(err);
+    showToast('バックアップの生成に失敗しました');
+    btn.disabled = false;
+    btn.textContent = '📤 バックアップを作成する';
+    progressWrap.style.display = 'none';
+  }
 }
 
 function openImportSheet() { resetImportStep(); document.getElementById('import-sheet').style.display = 'flex'; }
 function closeImportSheet() { document.getElementById('import-sheet').style.display = 'none'; document.getElementById('import-file').value = ''; pendingImportData = null; }
-function resetImportStep() { document.getElementById('import-step1').style.display = 'block'; document.getElementById('import-step2').style.display = 'none'; document.getElementById('import-progress-wrap').style.display = 'none'; document.getElementById('import-file').value = ''; pendingImportData = null; const radios = document.querySelectorAll('input[name="import-mode"]'); radios.forEach(r => r.checked = r.value === 'merge'); document.getElementById('overwrite-warning').style.display = 'none'; }
-async function handleImportFile(event) { const file = event.target.files[0]; if (!file) return; try { const text = await file.text(); const data = JSON.parse(text); const list = data.entries || (Array.isArray(data) ? data : null); if (!list || !list.length) { showToast('有効なバックアップデータが見つかりません'); event.target.value = ''; return; } pendingImportData = { raw: data, entries: list }; const schemaVer = data.schemaVersion || 1; const appVer = data.appVersion || '不明'; const exportedAt = data.exportedAtLocal || (data.exportedAt ? new Date(data.exportedAt).toLocaleString('ja-JP') : '不明'); document.getElementById('import-backup-info').innerHTML = `<div style="display:grid;gap:6px;font-size:13px;"><div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">作成日時</span><span style="font-weight:500;">${esc(exportedAt)}</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">ライブ記録数</span><span style="font-weight:500;color:var(--accent);">${list.length}件</span></div><div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:var(--text3);">アプリバージョン</span><span style="font-weight:500;">v${esc(appVer)}</span></div></div>`; document.getElementById('overwrite-current-count').textContent = `${entries.length}`; updateImportMode(); document.getElementById('import-step1').style.display = 'none'; document.getElementById('import-step2').style.display = 'block'; document.getElementById('import-sheet').style.display = 'flex'; } catch(err) { showToast('JSONファイルの解析に失敗しました'); event.target.value = ''; } }
-function updateImportMode() { const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge'; const warn = document.getElementById('overwrite-warning'); warn.style.display = mode === 'overwrite' ? 'block' : 'none'; const btn = document.getElementById('import-execute-btn'); btn.textContent = mode === 'overwrite' ? '⚠️ 上書きして復元する' : '✓ マージして復元する'; btn.style.background = mode === 'overwrite' ? 'linear-gradient(135deg,#b91c1c,#ef4444)' : 'linear-gradient(135deg,var(--accent3),var(--accent2))'; }
-async function executeImport() { if (!pendingImportData) return; const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge'; const list = pendingImportData.entries; if (mode === 'overwrite' && !confirm(`⚠️ 現在のデータがすべて削除されます。続けますか？`)) return; const progressWrap = document.getElementById('import-progress-wrap'); const progressBar = document.getElementById('import-progress-bar'); const progressLabel = document.getElementById('import-progress-label'); const btn = document.getElementById('import-execute-btn'); btn.disabled = true; progressWrap.style.display = 'block'; try { if (mode === 'overwrite') { progressLabel.textContent = '既存データを削除中...'; const existing = await dbAll(); for (const e of existing) await dbDelete(e.id); } for (let i = 0; i < list.length; i++) { const entry = list[i]; if (!entry.id) entry.id = 'live_' + Date.now() + '_' + i; entry.importedAt = new Date().toISOString(); await dbPut(entry); const pct = Math.round((i + 1) / list.length * 100); progressBar.style.width = pct + '%'; progressLabel.textContent = `インポート中 ${i+1}/${list.length}件...`; if (i % 5 === 0) await new Promise(r => setTimeout(r, 0)); } entries = await dbAll(); renderList(); renderTimeline(); renderStats(); renderFilterChips(); refreshSettingsLabels(); checkBackupReminder(); closeImportSheet(); showToast(`📥 ${list.length}件を復元しました`); } catch(err) { showToast('復元中にエラーが発生しました'); btn.disabled = false; } }
 
-async function showDataInfo() { const all = await dbAll(); const json = JSON.stringify(all); const totalKB = Math.round(json.length / 1024); const years = [...new Set(all.map(e=>e.date?.slice(0,4)).filter(Boolean))].sort((a,b)=>b-a); document.getElementById('datainfo-content').innerHTML = `<div style="margin-bottom:20px;"><div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:10px;">ストレージ使用量</div><div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;"><div style="display:flex;justify-content:space-between;"><span style="font-size:13px;color:var(--text2);">全体データサイズ</span><span style="font-size:13px;font-weight:600;">${totalKB.toLocaleString()} KB</span></div></div></div><div style="margin-bottom:20px;"><div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:10px;">年別内訳</div>${years.map(y => { const cnt = all.filter(e=>e.date?.startsWith(y)).length; return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><span style="color:var(--text2);">${y}年</span><span style="font-weight:600;color:var(--accent);">${cnt}公演</span></div>`; }).join('')}</div>`; document.getElementById('datainfo-sheet').style.display = 'flex'; }
+function resetImportStep() {
+  document.getElementById('import-step1').style.display = 'block';
+  document.getElementById('import-step2').style.display = 'none';
+  document.getElementById('import-progress-wrap').style.display = 'none';
+  document.getElementById('import-file').value = '';
+  pendingImportData = null;
+  const radios = document.querySelectorAll('input[name="import-mode"]');
+  radios.forEach(r => r.checked = r.value === 'merge');
+  document.getElementById('overwrite-warning').style.display = 'none';
+}
+
+async function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+
+  try {
+    const text = await file.text();
+    const data = JSON.parse(text);
+
+    const list = data.entries || (Array.isArray(data) ? data : null);
+    if (!list || !list.length) {
+      showToast('有効なバックアップデータが見つかりません');
+      event.target.value = '';
+      return;
+    }
+
+    pendingImportData = { raw: data, entries: list };
+
+    const schemaVer = data.schemaVersion || 1;
+    const appVer = data.appVersion || '不明';
+    const exportedAt = data.exportedAtLocal || (data.exportedAt ? new Date(data.exportedAt).toLocaleString('ja-JP') : '不明');
+
+    document.getElementById('import-backup-info').innerHTML = `
+      <div style="display:grid;gap:6px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">作成日時</span><span style="font-weight:500;">${esc(exportedAt)}</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);"><span style="color:var(--text3);">ライブ記録数</span><span style="font-weight:500;color:var(--accent);">${list.length}件</span></div>
+        <div style="display:flex;justify-content:space-between;padding:4px 0;"><span style="color:var(--text3);">アプリバージョン</span><span style="font-weight:500;">v${esc(appVer)}</span></div>
+        ${schemaVer > SCHEMA_VERSION ? `<div style="color:var(--danger);font-size:12px;margin-top:4px;">⚠️ 新しいバージョンのデータです。</div>` : ''}
+      </div>
+    `;
+
+    document.getElementById('overwrite-current-count').textContent = `${entries.length}`;
+    updateImportMode();
+
+    document.getElementById('import-step1').style.display = 'none';
+    document.getElementById('import-step2').style.display = 'block';
+    document.getElementById('import-sheet').style.display = 'flex';
+
+  } catch(err) {
+    console.error(err);
+    showToast('JSONファイルの解析に失敗しました');
+    event.target.value = '';
+  }
+}
+
+function updateImportMode() {
+  const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
+  const warn = document.getElementById('overwrite-warning');
+  warn.style.display = mode === 'overwrite' ? 'block' : 'none';
+  const btn = document.getElementById('import-execute-btn');
+  btn.textContent = mode === 'overwrite' ? '⚠️ 上書きして復元する' : '✓ マージして復元する';
+  btn.style.background = mode === 'overwrite' ? 'linear-gradient(135deg,#b91c1c,#ef4444)' : 'linear-gradient(135deg,var(--accent3),var(--accent2))';
+}
+
+async function executeImport() {
+  if (!pendingImportData) return;
+  const mode = document.querySelector('input[name="import-mode"]:checked')?.value || 'merge';
+  const list = pendingImportData.entries;
+
+  if (mode === 'overwrite' && !confirm(`⚠️ 現在のデータがすべて削除されます。続けますか？`)) return;
+
+  const progressWrap = document.getElementById('import-progress-wrap');
+  const progressBar = document.getElementById('import-progress-bar');
+  const progressLabel = document.getElementById('import-progress-label');
+  const btn = document.getElementById('import-execute-btn');
+
+  btn.disabled = true;
+  progressWrap.style.display = 'block';
+
+  try {
+    if (mode === 'overwrite') {
+      progressLabel.textContent = '既存データを削除中...';
+      const existing = await dbAll();
+      for (const e of existing) await dbDelete(e.id);
+    }
+
+    for (let i = 0; i < list.length; i++) {
+      const entry = list[i];
+      if (!entry.id) entry.id = 'live_' + Date.now() + '_' + i;
+      entry.importedAt = new Date().toISOString();
+      await dbPut(entry);
+
+      const pct = Math.round((i + 1) / list.length * 100);
+      progressBar.style.width = pct + '%';
+      progressLabel.textContent = `インポート中 ${i+1}/${list.length}件...`;
+      if (i % 5 === 0) await new Promise(r => setTimeout(r, 0));
+    }
+
+    entries = await dbAll();
+    renderList(); renderTimeline(); renderStats(); renderFilterChips(); refreshSettingsLabels();
+    checkBackupReminder(); // 復元時にもリマインド状態を再計算する
+    closeImportSheet();
+    showToast(`📥 ${list.length}件を復元しました`);
+
+  } catch(err) {
+    console.error(err); showToast('復元中にエラーが発生しました'); btn.disabled = false;
+  }
+}
+
+async function showDataInfo() {
+  const all = await dbAll();
+  const json = JSON.stringify(all);
+  const totalKB = Math.round(json.length / 1024);
+  const years = [...new Set(all.map(e=>e.date?.slice(0,4)).filter(Boolean))].sort((a,b)=>b-a);
+
+  document.getElementById('datainfo-content').innerHTML = `
+    <div style="margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:10px;">ストレージ使用量</div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;">
+        <div style="display:flex;justify-content:space-between;"><span style="font-size:13px;color:var(--text2);">全体データサイズ</span><span style="font-size:13px;font-weight:600;">${totalKB.toLocaleString()} KB</span></div>
+      </div>
+    </div>
+    <div style="margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--text3);font-weight:600;margin-bottom:10px;">年別内訳</div>
+      ${years.map(y => {
+        const cnt = all.filter(e=>e.date?.startsWith(y)).length;
+        return `<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;"><span style="color:var(--text2);">${y}年</span><span style="font-weight:600;color:var(--accent);">${cnt}公演</span></div>`;
+      }).join('')}
+    </div>
+  `;
+  document.getElementById('datainfo-sheet').style.display = 'flex';
+}
+
 function closeDataInfoSheet() { document.getElementById('datainfo-sheet').style.display = 'none'; }
 
-async function confirmDeleteAll() { const all = await dbAll(); if (all.length === 0) { showToast('削除するデータがありません'); return; } if (!confirm(`⚠️ 全${all.length}件のデータを削除します。\\n\\n先にバックアップを作成することを強くおすすめします。\\n\\n本当に削除しますか？`)) return; if (!confirm('最終確認: この操作は取り消せません。削除しますか？')) return; for (const e of all) await dbDelete(e.id); entries = []; renderList(); renderTimeline(); renderStats(); renderFilterChips(); refreshSettingsLabels(); showToast('🗑 全データを削除しました'); }
-
 // ===== SERVICE WORKER =====
-if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('./sw.js').then(reg => { reg.update(); reg.addEventListener('updatefound', () => { const newWorker = reg.installing; if (!newWorker) return; newWorker.addEventListener('statechange', () => { if (newWorker.state === 'installed' && navigator.serviceWorker.controller) { newWorker.postMessage({ type: 'SKIP_WAITING' }); showToast('🔄 新しいバージョンを適用中...'); } }); }); }).catch(err => console.warn('[SW] register failed:', err)); let refreshing = false; navigator.serviceWorker.addEventListener('controllerchange', () => { if (!refreshing) { refreshing = true; setTimeout(() => { window.location.reload(); }, 1000); } }); }); }
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      reg.update();
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (!newWorker) return;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+            showToast('🔄 新しいバージョンを適用中...');
+          }
+        });
+      });
+    }).catch(err => console.warn('[SW] register failed:', err));
+
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      if (!refreshing) {
+        refreshing = true;
+        setTimeout(() => { window.location.reload(); }, 1000);
+      }
+    });
+  });
+}
 
 // ===== UTILS =====
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function fmtDate(d) { if (!d) return ''; const [y,m,day] = d.split('-'); if (!y) return d; return `${y}年${parseInt(m)}月${parseInt(day)}日(${['日','月','火','水','木','金','土'][new Date(d).getDay()]})`; }
+function fmtDate(d) {
+  if (!d) return ''; const [y,m,day] = d.split('-'); if (!y) return d;
+  const weekdays = ['日','月','火','水','木','金','土'];
+  return `${y}年${parseInt(m)}月${parseInt(day)}日(${weekdays[new Date(d).getDay()]})`;
+}
+
+let toastTimer;
+function showToast(msg) {
+  clearTimeout(toastTimer);
+  let t = document.querySelector('.toast'); if (t) t.remove();
+  t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
+  document.body.appendChild(t); toastTimer = setTimeout(()=>t.remove(), 4000); // 案内トーストをしっかり読めるよう4秒表示に延長
+}
 </script>
 </body>
 </html>
