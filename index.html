@@ -498,7 +498,7 @@
       </div>
       <div class="form-group">
         <label>バックアップメモ（任意）</label>
-        <input type="text" id="export-filename" placeholder="LiveLog.json" style="font-size:13px;">
+        <input type="text" id="export-memo" placeholder="例: 定期バックアップ">
       </div>
       <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:16px;">
         <div>
@@ -634,7 +634,7 @@ let entries = [];
 let currentTags = [];
 let currentEditId = null;
 let currentDetailId = null;
-let currentImages = []; // 複数画像 Base64配列
+let currentImages = []; 
 let searchQuery = '';
 let activeFilter = 'all';
 let currentTab = 'list';
@@ -792,7 +792,6 @@ function openAddSheet(editId=null) {
     document.getElementById('sheet-title').textContent = 'ライブを編集'; document.getElementById('delete-btn').style.display = 'block';
   } else {
     document.getElementById('sheet-title').textContent = 'ライブを記録'; document.getElementById('delete-btn').style.display = 'none'; setToday();
-    // 🆕 新規追加時はバッジを 0/10枚 に初期化
     if (document.getElementById('image-count-badge')) document.getElementById('image-count-badge').textContent = '0 / 10枚';
   }
   renderTagsUI(); renderTagSuggestions(); _resetSaveBtn();
@@ -802,18 +801,15 @@ function openAddSheet(editId=null) {
 function closeAddSheet() { const sheet = document.getElementById('add-sheet'); if (sheet) { sheet.style.display = 'none'; sheet.classList.add('hidden'); } _resetSaveBtn(); }
 function closeSheetOutside(e) { if (e.target.id==='add-sheet') closeAddSheet(); }
 
-// ===== 🆕 v2.3 バリデーション＆枚数バッジ連動ロジック =====
+// ===== v2.3 バリデーション＆枚数バッジ連動ロジック =====
 function updateImageCountAndValidation() {
   const count = currentImages.length;
-  
-  // 1. バッジの枚数テキスト更新
   const badge = document.getElementById('image-count-badge');
   if (badge) {
     badge.textContent = `${count} / 10枚`;
     badge.style.color = count > 10 ? 'var(--danger)' : 'var(--accent)';
   }
 
-  // 2. 10枚超過時のロック＆警告メッセージ処理
   const warnBox = document.getElementById('photo-limit-warning');
   const saveBtn = document.getElementById('save-btn');
   
@@ -872,8 +868,6 @@ function resizeAndCompressImage(file) {
 function renderFormImagesUI() {
   const grid = document.getElementById('form-image-preview-grid'); if (!grid) return;
   grid.innerHTML = currentImages.map((imgSrc, index) => `<div class="form-img-box"><img src="${imgSrc}"><button type="button" class="form-img-rm" onclick="removeFormImage(${index})">✕</button></div>`).join('');
-  
-  // 枚数が変わるたびにバリデーションを走らせる
   updateImageCountAndValidation();
 }
 
@@ -1001,6 +995,12 @@ if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navi
 // ===== UTILS =====
 function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function fmtDate(d) { if (!d) return ''; const [y,m,day] = d.split('-'); if (!y) return d; return `${y}年${parseInt(m)}月${parseInt(day)}日(${['日','月','火','水','木','金','土'][new Date(d).getDay()]})`; }
+
+// 🆕 ここが抜けていたためにフリーズしていました。ピンポイントで完全復活です。
+function waitFrame() { return new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0))); }
+
+let toastTimer;
+function showToast(msg) { clearTimeout(toastTimer); let t = document.querySelector('.toast'); if (t) t.remove(); t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; document.body.appendChild(t); toastTimer = setTimeout(()=>t.remove(), 4000); }
 </script>
 </body>
 </html>
